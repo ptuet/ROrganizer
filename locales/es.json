@@ -26,7 +26,8 @@
     "open_config_dir": "Abrir carpeta de configuración",
     "close": "Cerrar",
     "esc_hint": "Esc para cerrar",
-    "minimize_to_taskbar": "Minimizar en la barra de tareas (no la bandeja del sistema)"
+    "minimize_to_taskbar": "Minimizar en la barra de tareas (no la bandeja del sistema)",
+    "fork": "Fork mantenido por ptuet"
   },
   "tray": {
     "show": "Mostrar",
