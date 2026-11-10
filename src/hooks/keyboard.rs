@@ -28,7 +28,12 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
 
     let focus_target = HOOK_STATE.get().and_then(|m| {
         let mut state = m.lock().ok()?;
-        resolve_action(&mut state, Trigger::Key(vk), crate::win::foreground_window)
+        resolve_action(
+            &mut state,
+            Trigger::Key(vk),
+            crate::win::foreground_window,
+            crate::win::is_dofus_window,
+        )
     });
 
     if let Some(hwnd) = focus_target {
@@ -42,22 +47,40 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
 /// Looks up the trigger against the binding table and returns the HWND to
 /// focus, advancing the cycler cursor as needed. Caller still holds the lock.
 ///
-/// `foreground` is only queried for cycle actions: when the window currently
-/// in front is part of the cycle, the cursor snaps to it first. The user may
-/// have switched account with the mouse (taskbar, click) since our last
-/// focus, and Next / Prev must continue from where they actually are.
+/// `foreground` (the window in front) is only queried once a binding matches,
+/// and only when needed:
+/// - with `dofus_only`, nothing happens unless that window is Dofus — a
+///   detected account, or any window of a Dofus executable (login screen,
+///   secondary window), checked through `is_dofus_window`. `None` lets the
+///   caller pass the key on untouched;
+/// - for cycle actions, when that window is part of the cycle, the cursor
+///   snaps to it first. The user may have switched account with the mouse
+///   (taskbar, click) since our last focus, and Next / Prev must continue
+///   from where they actually are.
 pub(super) fn resolve_action(
     state: &mut super::state::HookState,
     trigger: Trigger,
     foreground: impl FnOnce() -> Option<isize>,
+    is_dofus_window: impl FnOnce(isize) -> bool,
 ) -> Option<isize> {
     let action = state
         .bindings
         .iter()
         .find(|(t, _)| *t == trigger)
         .map(|(_, a)| *a)?;
-    if matches!(action, BindingAction::CycleNext | BindingAction::CyclePrev)
-        && let Some(fg) = foreground()
+    let is_cycle = matches!(action, BindingAction::CycleNext | BindingAction::CyclePrev);
+    let fg = if state.dofus_only || is_cycle {
+        foreground()
+    } else {
+        None
+    };
+    if state.dofus_only
+        && !fg.is_some_and(|h| state.cycle_hwnds.contains(&h) || is_dofus_window(h))
+    {
+        return None;
+    }
+    if is_cycle
+        && let Some(fg) = fg
         && let Some(pos) = state.cycle_hwnds.iter().position(|&x| x == fg)
     {
         state.cycle_index = pos;
@@ -108,13 +131,14 @@ mod tests {
             cycle_hwnds,
             cycle_index: 0,
             cycle_current_hwnd: None,
+            dofus_only: false,
         }
     }
 
     #[test]
     fn empty_bindings_resolves_to_none() {
         let mut st = make_state(Vec::new(), vec![100, 200]);
-        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false).is_none());
     }
 
     #[test]
@@ -123,7 +147,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::Focus(100))],
             vec![100],
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x71), || None).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x71), || None, |_| false).is_none());
     }
 
     #[test]
@@ -133,7 +157,7 @@ mod tests {
             vec![100, 200, 300, 400],
         );
         st.cycle_index = 0; // start away from 300
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(300));
         assert_eq!(st.cycle_index, 2);
         assert_eq!(st.cycle_current_hwnd, Some(300));
@@ -146,7 +170,7 @@ mod tests {
             vec![100, 200],
         );
         st.cycle_index = 1;
-        resolve_action(&mut st, Trigger::Key(0x70), || None);
+        resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(st.cycle_index, 1, "untouched when target outside cycle");
         assert_eq!(st.cycle_current_hwnd, Some(999));
     }
@@ -158,7 +182,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 2;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(100));
         assert_eq!(st.cycle_index, 0);
         assert_eq!(st.cycle_current_hwnd, Some(100));
@@ -171,7 +195,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(200));
         assert_eq!(st.cycle_index, 1);
     }
@@ -183,7 +207,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(300));
         assert_eq!(st.cycle_index, 2);
     }
@@ -195,7 +219,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 2;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(200));
         assert_eq!(st.cycle_index, 1);
     }
@@ -206,7 +230,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::CycleNext)],
             Vec::new(),
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false).is_none());
         assert_eq!(st.cycle_current_hwnd, None);
     }
 
@@ -216,7 +240,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::CyclePrev)],
             Vec::new(),
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false).is_none());
     }
 
     #[test]
@@ -229,7 +253,7 @@ mod tests {
             ],
             vec![100, 200],
         );
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None, |_| false);
         assert_eq!(r, Some(500));
     }
 
@@ -242,7 +266,7 @@ mod tests {
             vec![100, 200, 300, 400],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300), |_| false);
         assert_eq!(r, Some(400));
         assert_eq!(st.cycle_index, 3);
     }
@@ -254,7 +278,7 @@ mod tests {
             vec![100, 200, 300, 400],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300), |_| false);
         assert_eq!(r, Some(200));
     }
 
@@ -266,19 +290,86 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 1;
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(999));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(999), |_| false);
         assert_eq!(r, Some(300));
     }
 
     #[test]
     fn focus_binding_never_queries_foreground() {
+        // Option off: a direct focus binding needs no foreground lookup.
         let mut st = make_state(
             vec![(Trigger::Key(0x70), BindingAction::Focus(200))],
             vec![100, 200],
         );
-        let r = resolve_action(&mut st, Trigger::Key(0x70), || {
-            panic!("foreground queried for a focus binding")
-        });
+        let r = resolve_action(
+            &mut st,
+            Trigger::Key(0x70),
+            || panic!("foreground queried for a focus binding"),
+            |_| panic!("process checked for a focus binding"),
+        );
         assert_eq!(r, Some(200));
+    }
+
+    fn dofus_only_state(binding: BindingAction) -> super::super::state::HookState {
+        let mut st = make_state(vec![(Trigger::Key(0x41), binding)], vec![100, 200, 300]);
+        st.dofus_only = true;
+        st
+    }
+
+    #[test]
+    fn dofus_only_ignores_the_key_outside_dofus() {
+        // "A" typed in a browser (hwnd 999, not a Dofus process): the key
+        // must go through, and the cycle cursor must not move.
+        for binding in [
+            BindingAction::Focus(200),
+            BindingAction::CycleNext,
+            BindingAction::CyclePrev,
+        ] {
+            let mut st = dofus_only_state(binding);
+            st.cycle_index = 1;
+            let r = resolve_action(&mut st, Trigger::Key(0x41), || Some(999), |_| false);
+            assert_eq!(r, None, "{binding:?}");
+            assert_eq!(st.cycle_index, 1, "{binding:?}");
+            assert_eq!(st.cycle_current_hwnd, None, "{binding:?}");
+        }
+    }
+
+    #[test]
+    fn dofus_only_ignores_the_key_without_foreground_window() {
+        let mut st = dofus_only_state(BindingAction::Focus(200));
+        assert_eq!(resolve_action(&mut st, Trigger::Key(0x41), || None, |_| true), None);
+    }
+
+    #[test]
+    fn dofus_only_acts_from_a_detected_account() {
+        let mut st = dofus_only_state(BindingAction::CycleNext);
+        let r = resolve_action(
+            &mut st,
+            Trigger::Key(0x41),
+            || Some(100),
+            |_| panic!("no process lookup needed for a detected account"),
+        );
+        assert_eq!(r, Some(200));
+    }
+
+    #[test]
+    fn dofus_only_acts_from_another_dofus_window() {
+        // Login screen of a client: a Dofus process, not in the account list.
+        let mut st = dofus_only_state(BindingAction::Focus(300));
+        let r = resolve_action(&mut st, Trigger::Key(0x41), || Some(555), |h| h == 555);
+        assert_eq!(r, Some(300));
+    }
+
+    #[test]
+    fn dofus_only_does_not_touch_unbound_keys() {
+        // Unbound key: no foreground lookup at all, whatever the option.
+        let mut st = dofus_only_state(BindingAction::Focus(200));
+        let r = resolve_action(
+            &mut st,
+            Trigger::Key(0x42),
+            || panic!("foreground queried for an unbound key"),
+            |_| panic!("process checked for an unbound key"),
+        );
+        assert_eq!(r, None);
     }
 }

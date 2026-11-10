@@ -137,6 +137,9 @@ pub struct App {
     title_regex: Option<String>,
     /// "–" and "Activer" minimize to the taskbar instead of the tray.
     minimize_to_taskbar: bool,
+    /// Shortcuts only fire while a Dofus window is in front (pushed to the
+    /// hook state, which makes the decision).
+    shortcuts_only_in_dofus: bool,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
@@ -174,6 +177,8 @@ impl App {
         // Load persisted config if any (silently falls back to defaults).
         let config_path = config::default_path();
         let stored = config_path.as_ref().and_then(|p| config::load(p));
+        // On by default, also when no config exists yet.
+        let shortcuts_only_in_dofus = stored.as_ref().is_none_or(|c| c.shortcuts_only_in_dofus);
 
         let (theme, lang, bindings, cycle_order, title_regex, minimize_to_taskbar) = match stored {
             Some(cfg) => (
@@ -220,7 +225,7 @@ impl App {
         let (refresh_tx, refresh_rx) = channel();
         win::spawn_watcher(windows.clone(), cc.egui_ctx.clone(), regex_src, refresh_rx);
 
-        let hooks = crate::hooks::install();
+        let hooks = crate::hooks::install(shortcuts_only_in_dofus);
 
         Self {
             theme,
@@ -244,6 +249,7 @@ impl App {
             conflicts_cache: None,
             title_regex,
             minimize_to_taskbar,
+            shortcuts_only_in_dofus,
             show_about: false,
             about_icon,
             class_icons,
@@ -310,6 +316,18 @@ impl App {
 
     pub fn minimize_to_taskbar(&self) -> bool {
         self.minimize_to_taskbar
+    }
+
+    pub fn shortcuts_only_in_dofus(&self) -> bool {
+        self.shortcuts_only_in_dofus
+    }
+
+    pub fn set_shortcuts_only_in_dofus(&mut self, on: bool) {
+        if self.shortcuts_only_in_dofus != on {
+            self.shortcuts_only_in_dofus = on;
+            self.hooks.set_dofus_only(on);
+            self.mark_dirty();
+        }
     }
 
     pub fn set_minimize_to_taskbar(&mut self, on: bool) {
@@ -547,6 +565,7 @@ impl App {
             theme: self.theme,
             title_regex: self.title_regex.clone(),
             minimize_to_taskbar: self.minimize_to_taskbar,
+            shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
         };
         let _ = config::save_atomic(path, &cfg);
     }

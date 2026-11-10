@@ -27,7 +27,8 @@
     "close": "Fermer",
     "esc_hint": "Échap pour fermer",
     "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)",
-    "fork": "Fork maintenu par ptuet"
+    "fork": "Fork maintenu par ptuet",
+    "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan"
   },
   "tray": {
     "show": "Afficher",
