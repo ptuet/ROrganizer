@@ -17,7 +17,8 @@
     "tooltip_refresh": "Actualizar",
     "tooltip_sort_taskbar": "Ordenar la barra de tareas en este orden",
     "tooltip_invite_group": "Invitar a todas las cuentas al grupo de la primera",
-    "tooltip_about": "Acerca de"
+    "tooltip_about": "Acerca de",
+    "tooltip_zaap_group": "Enviar todas las cuentas al mismo zaap"
   },
   "about": {
     "credit": "Desarrollado por Loulouw con la ayuda de Claude",
@@ -47,5 +48,11 @@
     "section": "Ciclo",
     "next": "Siguiente",
     "prev": "Anterior"
+  },
+  "zaap": {
+    "title": "Zaap para todas las cuentas",
+    "search_hint": "Buscar un zaap…",
+    "no_result": "Ningún zaap encontrado",
+    "hint": "Clic o Intro: todas las cuentas van allí · Esc para cerrar"
   }
 }

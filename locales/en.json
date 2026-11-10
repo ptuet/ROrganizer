@@ -17,7 +17,8 @@
     "tooltip_refresh": "Refresh",
     "tooltip_sort_taskbar": "Sort the taskbar in this order",
     "tooltip_invite_group": "Invite every account into the first one's group",
-    "tooltip_about": "About"
+    "tooltip_about": "About",
+    "tooltip_zaap_group": "Send every account to the same zaap"
   },
   "about": {
     "credit": "Built by Loulouw with the help of Claude",
@@ -47,5 +48,11 @@
     "section": "Cycle",
     "next": "Next",
     "prev": "Previous"
+  },
+  "zaap": {
+    "title": "Zaap for every account",
+    "search_hint": "Search a zaap…",
+    "no_result": "No zaap found",
+    "hint": "Click or Enter: every account goes there · Esc to close"
   }
 }

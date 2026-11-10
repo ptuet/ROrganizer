@@ -138,6 +138,8 @@ pub struct App {
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
+    /// Zaap picker modal: `Some(query)` while open, with the search text.
+    zaap_query: Option<String>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -240,6 +242,7 @@ impl App {
             conflicts_cache: None,
             title_regex,
             show_about: false,
+            zaap_query: None,
             about_icon,
             class_icons,
         }
@@ -267,6 +270,19 @@ impl App {
 
     pub fn close_about(&mut self) {
         self.show_about = false;
+    }
+
+    pub fn open_zaap(&mut self) {
+        self.zaap_query = Some(String::new());
+    }
+
+    pub fn close_zaap(&mut self) {
+        self.zaap_query = None;
+    }
+
+    /// Search text of the zaap picker, `None` while it is closed.
+    pub fn zaap_query_mut(&mut self) -> Option<&mut String> {
+        self.zaap_query.as_mut()
     }
 
     /// Parent of the persisted config file, used by the About modal to
@@ -359,7 +375,20 @@ impl App {
         };
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
-        win::chat::send_commands(*leader, commands, move || ctx.request_repaint());
+        win::chat::send_plan(vec![(*leader, commands)], None, move || ctx.request_repaint());
+    }
+
+    /// Every launched account types `/zaap x,y`, in list order, then the
+    /// first account comes back to the front.
+    pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
+        let accounts = self.live_accounts();
+        let plan: Vec<win::chat::Step> = accounts
+            .iter()
+            .map(|(_, hwnd)| (*hwnd, vec![zaap.command()]))
+            .collect();
+        let first = accounts.first().map(|(_, hwnd)| *hwnd);
+        let ctx = ctx.clone();
+        win::chat::send_plan(plan, first, move || ctx.request_repaint());
     }
 
     /// Launched accounts with their HWND, in the order shown in the app.
@@ -644,7 +673,7 @@ impl App {
         // would visually look like the modal is broken.
         const ABOUT_MIN: f32 = 420.0;
         let mut desired = desired_content;
-        if self.show_about {
+        if self.show_about || self.zaap_query.is_some() {
             desired = desired.max(ABOUT_MIN);
         }
         let desired = desired.clamp(280.0, 600.0);
@@ -702,6 +731,7 @@ impl eframe::App for App {
         ui::main_view::draw(ui, self);
         ui::capture::draw(ctx, self);
         ui::about::draw(ctx, self);
+        ui::zaap::draw(ctx, self);
 
         self.flush_if_due();
     }

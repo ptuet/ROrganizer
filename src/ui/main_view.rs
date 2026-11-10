@@ -34,14 +34,13 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                 .inner_margin(Margin::symmetric(12, 12)),
         )
         .show(ui, |ui| {
-            draw_summary(
-                ui,
-                theme,
-                ordered.len(),
-                || app.request_refresh(),
-                || app.sort_taskbar(ctx),
-                || app.invite_group(ctx),
-            );
+            match draw_summary(ui, theme, ordered.len()) {
+                Some(SummaryAction::Refresh) => app.request_refresh(),
+                Some(SummaryAction::SortTaskbar) => app.sort_taskbar(ctx),
+                Some(SummaryAction::InviteGroup) => app.invite_group(ctx),
+                Some(SummaryAction::OpenZaap) => app.open_zaap(),
+                None => {}
+            }
             ui.add_space(10.0);
 
             if ordered.is_empty() {
@@ -114,14 +113,17 @@ fn draw_active_toggle(ui: &mut egui::Ui, ctx: &egui::Context, theme: Theme, app:
     }
 }
 
-fn draw_summary(
-    ui: &mut egui::Ui,
-    theme: Theme,
-    count: usize,
-    on_refresh: impl FnOnce(),
-    on_sort_taskbar: impl FnOnce(),
-    on_invite_group: impl FnOnce(),
-) {
+/// Icon buttons of the summary row.
+enum SummaryAction {
+    Refresh,
+    SortTaskbar,
+    InviteGroup,
+    OpenZaap,
+}
+
+/// Account count + icon buttons. Returns the button clicked this frame.
+fn draw_summary(ui: &mut egui::Ui, theme: Theme, count: usize) -> Option<SummaryAction> {
+    let mut action = None;
     ui.horizontal(|ui| {
         let label = match count {
             0 => t!("main.accounts_zero").to_string(),
@@ -135,7 +137,7 @@ fn draw_summary(
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if refresh_button(ui, theme).clicked() {
-                on_refresh();
+                action = Some(SummaryAction::Refresh);
             }
             // Sorting and inviting only mean something with 2+ windows.
             if count >= 2 {
@@ -145,19 +147,29 @@ fn draw_summary(
                     .clicked()
                     && !busy
                 {
-                    on_sort_taskbar();
+                    action = Some(SummaryAction::SortTaskbar);
                 }
-                let busy = win::chat::is_busy();
-                if icon_button(ui, theme, busy, paint_invite_icon)
+            }
+            let chat_busy = win::chat::is_busy();
+            if count >= 2
+                && icon_button(ui, theme, chat_busy, paint_invite_icon)
                     .on_hover_text(t!("header.tooltip_invite_group").to_string())
                     .clicked()
-                    && !busy
-                {
-                    on_invite_group();
-                }
+                && !chat_busy
+            {
+                action = Some(SummaryAction::InviteGroup);
+            }
+            if count >= 1
+                && icon_button(ui, theme, chat_busy, paint_zaap_icon)
+                    .on_hover_text(t!("header.tooltip_zaap_group").to_string())
+                    .clicked()
+                && !chat_busy
+            {
+                action = Some(SummaryAction::OpenZaap);
             }
         });
     });
+    action
 }
 
 /// Small icon button drawn by hand, so it doesn't depend on a glyph being
@@ -190,6 +202,18 @@ fn paint_sort_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
         let y = rect.center().y - 4.0 + i as f32 * 4.0;
         painter.line_segment([egui::pos2(left, y), egui::pos2(left + len, y)], stroke);
     }
+}
+
+/// "Zaap": a portal, two concentric rings on a short base.
+fn paint_zaap_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+    let c = rect.center() + egui::vec2(0.0, -1.0);
+    painter.circle_stroke(c, 6.0, stroke);
+    painter.circle_stroke(c, 2.5, stroke);
+    let base_y = c.y + 8.0;
+    painter.line_segment(
+        [egui::pos2(c.x - 5.0, base_y), egui::pos2(c.x + 5.0, base_y)],
+        stroke,
+    );
 }
 
 /// "Invite": a person (head + shoulders) with a "+" on its right.

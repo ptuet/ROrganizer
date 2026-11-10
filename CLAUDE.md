@@ -601,6 +601,33 @@ commandes ne fait que ralentir.
   `HOOK_ENABLED` qui appartient à l'utilisateur), un seul envoi à la fois,
   arrêt si l'utilisateur change de fenêtre en cours de route.
 
+### Zaap pour tous les comptes (`main` uniquement)
+
+Bouton « portail » → fenêtre de recherche (`ui::zaap`) → chaque compte lancé
+tape `/zaap x,y` à tour de rôle (`win::chat::send_plan`), puis le premier
+compte de la liste revient devant. `/zaap` vérifié en jeu : téléporte sans
+confirmation, depuis n'importe quelle map.
+
+La liste (`src/zaaps.rs`, 45 zaaps) vient de **DofusDB** (indices de carte
+nommés « Zaap » + sous-zone = « Territoire » en jeu), générée **à la main**
+par `scripts/gen_zaaps.py` — jamais au build (pas de réseau). 8 entrées
+recoupées avec la fenêtre zaap du jeu (test `table_matches_the_in_game_list`).
+Prismes d'alliance exclus. Recherche sans casse ni accents, sur territoire
+et région, tous les mots doivent correspondre.
+
+Pièges rencontrés en la générant :
+- Sous Windows, rediriger la sortie d'un script Python l'écrit en cp1252 :
+  le script force `stdout` en UTF-8.
+- `GET /subareas?id[$in][]=…` renvoie une réponse vide sur cette API ; le
+  script interroge `/subareas/<id>` un par un.
+
+### Branches `main` / `vanilla`
+
+`vanilla` = version sans aucune interaction avec le client Dofus (pas de
+`win::chat`, aucun `SendInput`). Les correctifs communs se font sur `main`
+puis `git cherry-pick` vers `vanilla` ; tout ce qui envoie des touches au
+jeu reste sur `main`.
+
 ### `title_regex` invalide en config = pas de crash
 
 Le watcher panique si la regex utilisateur ne compile pas. La config
