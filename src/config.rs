@@ -22,6 +22,10 @@ pub struct StoredConfig {
     /// title format changes without rebuilding.
     #[serde(default)]
     pub title_regex: Option<String>,
+    /// "–" and "Activer" minimize to the Windows taskbar instead of hiding
+    /// in the system tray. Missing in older JSONs → false (tray, as before).
+    #[serde(default)]
+    pub minimize_to_taskbar: bool,
 }
 
 /// `%APPDATA%\rorganizer\config.json` on Windows. Returns None on platforms
@@ -99,7 +103,19 @@ mod tests {
             lang: Lang::Fr,
             theme: Theme::Dark,
             title_regex: None,
+            minimize_to_taskbar: true,
         }
+    }
+
+    #[test]
+    fn config_without_minimize_field_defaults_to_tray() {
+        // A config.json written before the option existed must still load.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        json.as_object_mut().unwrap().remove("minimize_to_taskbar");
+        std::fs::write(&path, json.to_string()).unwrap();
+        assert!(!load(&path).expect("old config loads").minimize_to_taskbar);
     }
 
     #[test]
@@ -114,6 +130,7 @@ mod tests {
         assert_eq!(loaded.cycle_order, cfg.cycle_order);
         assert_eq!(loaded.lang, cfg.lang);
         assert_eq!(loaded.theme, cfg.theme);
+        assert_eq!(loaded.minimize_to_taskbar, cfg.minimize_to_taskbar);
     }
 
     #[test]

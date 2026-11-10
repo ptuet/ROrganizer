@@ -97,7 +97,11 @@ fn draw_active_toggle(ui: &mut egui::Ui, ctx: &egui::Context, theme: Theme, app:
         ui.add_space(4.0);
         ui.vertical_centered(|ui| {
             ui.label(
-                egui::RichText::new(t!("main.activate_hint").to_string())
+                egui::RichText::new(if app.minimize_to_taskbar() {
+                    t!("main.activate_hint_taskbar").to_string()
+                } else {
+                    t!("main.activate_hint").to_string()
+                })
                     .size(11.0)
                     .color(theme::text_tertiary(theme)),
             );
