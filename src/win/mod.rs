@@ -2,6 +2,7 @@ pub mod enumerate;
 pub mod focus;
 pub mod keyboard_layout;
 pub mod process;
+pub mod taskbar;
 pub mod watcher;
 
 pub use enumerate::{DetectedWindow, DEFAULT_TITLE_REGEX};
