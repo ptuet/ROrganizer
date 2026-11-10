@@ -555,9 +555,24 @@ Aucune API Windows ne déplace un bouton de barre des tâches. `win::taskbar`
 s'appuie sur le fait qu'un bouton ré-ajouté par `ITaskbarList::AddTab` passe
 en dernier : `DeleteTab` + `AddTab` sur chaque fenêtre dans l'ordre de
 `cycle_order` reproduit cet ordre. Thread dédié avec son propre appartement
-COM (STA), pour ne pas toucher à l'état COM du thread UI ; 30 ms entre deux
-fenêtres pour qu'Explorer garde la séquence. L'ordre n'est pas persistant :
-un redémarrage d'Explorer ou une fenêtre recréée par Dofus le défait.
+COM (STA), pour ne pas toucher à l'état COM du thread UI. L'ordre n'est pas
+persistant : un redémarrage d'Explorer ou une fenêtre recréée par Dofus le
+défait.
+
+⚠ **Pause obligatoire entre `DeleteTab` et `AddTab`.** Explorer traite ces
+appels de façon asynchrone ; enchaînés sans pause, ils peuvent s'annuler et
+le bouton reste en place. Mesuré sur une icône groupée de 4 fenêtres, ordres
+cibles aléatoires : sans pause 3/30 faux, 20 ms 1/30 faux, 50 ms 30/30,
+100 ms 80/80 y compris CPU saturé. `STEP_DELAY` = 100 ms après chaque appel.
+Ne pas faire deux passes « par sécurité » : un échec dans la 2ᵉ passe
+casse un ordre que la 1ʳᵉ avait réussi.
+
+Banc de test utilisé : 4 fenêtres WinForms de couleurs pures dans un même
+process (donc groupées), survol de l'icône par vrais `mouse_event`, capture
+de la bande au-dessus de la barre et lecture de l'ordre par segments de
+couleur ≥ 40 px (les icônes de titre des miniatures contiennent du jaune).
+UI Automation ne voit **pas** les miniatures de groupe : elles sont rendues
+par DWM, `FromPoint` traverse le popup.
 
 ### `title_regex` invalide en config = pas de crash
 

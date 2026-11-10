@@ -14,9 +14,13 @@ use windows::Win32::System::Com::{
 };
 use windows::Win32::UI::Shell::{ITaskbarList, TaskbarList};
 
-/// Lets Explorer process each re-add before the next one, so the buttons
-/// keep the requested order.
-const STEP_DELAY: Duration = Duration::from_millis(30);
+/// Pause after each `DeleteTab` and each `AddTab`. Explorer handles these
+/// asynchronously: a Delete immediately followed by its Add can be merged
+/// into a no-op, leaving that button in place. Measured on a grouped icon
+/// with 4 windows, random target orders: no pause → 3/30 wrong, 20 ms →
+/// 1/30 wrong, 50 ms → 30/30 OK, 100 ms → 80/80 OK including under full
+/// CPU load. 100 ms keeps a margin.
+const STEP_DELAY: Duration = Duration::from_millis(100);
 
 /// Re-adds each window's taskbar button in `hwnds` order. Runs on a
 /// short-lived thread with its own COM apartment, leaving the UI thread's
@@ -35,6 +39,7 @@ pub fn reorder_taskbar(hwnds: Vec<isize>) {
             for h in hwnds {
                 let hwnd = HWND(h as *mut _);
                 let _ = list.DeleteTab(hwnd);
+                thread::sleep(STEP_DELAY);
                 let _ = list.AddTab(hwnd);
                 thread::sleep(STEP_DELAY);
             }
