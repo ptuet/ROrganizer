@@ -1,6 +1,8 @@
 use eframe::egui;
 use serde::{Deserialize, Serialize};
 
+use crate::win::keyboard_layout;
+
 pub type SlotKey = String;
 
 /// What the user is binding a Trigger to.
@@ -37,6 +39,9 @@ pub enum WheelDir {
 impl Trigger {
     pub fn display_label(&self) -> String {
         match self {
+            Trigger::Key(vk) if is_oem_vk(*vk) => keyboard_layout::vk_to_char(*vk)
+                .map(|c| c.to_string())
+                .unwrap_or_else(|| vk_to_label(*vk)),
             Trigger::Key(vk) => vk_to_label(*vk),
             Trigger::Mouse(MouseBtn::Middle) => "MWheel".into(),
             Trigger::Mouse(MouseBtn::X1) => "Mb4".into(),
@@ -45,6 +50,43 @@ impl Trigger {
             Trigger::Wheel(WheelDir::Down) => "MWh\u{2193}".into(),
         }
     }
+}
+
+/// VK the global hook will receive for this key press on the active layout.
+///
+/// Layout-dependent keys are resolved from their physical position, because
+/// `key_to_vk` assumes US-QWERTY VKs (AZERTY `²` would be stored as 0xC0,
+/// which the hook sees as `ù`). Everything else goes through `key_to_vk`.
+pub fn event_to_vk(key: egui::Key, physical_key: Option<egui::Key>) -> Option<u32> {
+    physical_key
+        .and_then(oem_scan_code)
+        .and_then(keyboard_layout::scan_code_to_vk)
+        .or_else(|| key_to_vk(key))
+}
+
+/// Set-1 scan code of the physical keys whose VK depends on the layout.
+/// egui names physical keys after their US-QWERTY legend.
+fn oem_scan_code(key: egui::Key) -> Option<u32> {
+    use egui::Key;
+    Some(match key {
+        Key::Backtick => 0x29,
+        Key::Minus => 0x0C,
+        Key::Equals => 0x0D,
+        Key::OpenBracket => 0x1A,
+        Key::CloseBracket => 0x1B,
+        Key::Backslash => 0x2B,
+        Key::Semicolon => 0x27,
+        Key::Quote => 0x28,
+        Key::Comma => 0x33,
+        Key::Period => 0x34,
+        Key::Slash => 0x35,
+        _ => return None,
+    })
+}
+
+/// VK_OEM_* range, whose printed character depends on the layout.
+fn is_oem_vk(vk: u32) -> bool {
+    matches!(vk, 0xBA..=0xC0 | 0xDB..=0xDF | 0xE2)
 }
 
 pub fn key_to_vk(key: egui::Key) -> Option<u32> {
@@ -261,6 +303,46 @@ mod tests {
     fn vk_label_unknown_falls_back_to_hex() {
         assert_eq!(vk_to_label(0xFE), "VK_0xFE");
         assert_eq!(vk_to_label(0x00), "VK_0x00");
+    }
+
+    #[test]
+    fn oem_scan_codes_cover_every_punctuation_key() {
+        use egui::Key;
+        for (key, sc) in [
+            (Key::Backtick, 0x29),
+            (Key::Minus, 0x0C),
+            (Key::Equals, 0x0D),
+            (Key::OpenBracket, 0x1A),
+            (Key::CloseBracket, 0x1B),
+            (Key::Backslash, 0x2B),
+            (Key::Semicolon, 0x27),
+            (Key::Quote, 0x28),
+            (Key::Comma, 0x33),
+            (Key::Period, 0x34),
+            (Key::Slash, 0x35),
+        ] {
+            assert_eq!(oem_scan_code(key), Some(sc), "{key:?}");
+            assert!(is_oem_vk(key_to_vk(key).unwrap()), "{key:?}");
+        }
+    }
+
+    #[test]
+    fn non_oem_keys_skip_the_layout_lookup() {
+        use egui::Key;
+        assert_eq!(oem_scan_code(Key::A), None);
+        assert_eq!(oem_scan_code(Key::F1), None);
+        assert_eq!(event_to_vk(Key::F1, Some(Key::F1)), Some(0x70));
+        assert_eq!(event_to_vk(Key::Space, None), Some(0x20));
+        assert_eq!(event_to_vk(Key::Escape, Some(Key::Escape)), None);
+    }
+
+    #[test]
+    fn oem_vk_range() {
+        assert!(is_oem_vk(0xDE));
+        assert!(is_oem_vk(0xC0));
+        assert!(is_oem_vk(0xE2));
+        assert!(!is_oem_vk(0x41));
+        assert!(!is_oem_vk(0x70));
     }
 
     #[test]
