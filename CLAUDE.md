@@ -549,6 +549,16 @@ touche ne forment pas un conflit. ⚠ Une config contenant une variante Alt
 n'est plus lisible par une version antérieure : serde échoue et
 `config::load` retombe sur les valeurs par défaut.
 
+### Tri de la barre des tâches
+
+Aucune API Windows ne déplace un bouton de barre des tâches. `win::taskbar`
+s'appuie sur le fait qu'un bouton ré-ajouté par `ITaskbarList::AddTab` passe
+en dernier : `DeleteTab` + `AddTab` sur chaque fenêtre dans l'ordre de
+`cycle_order` reproduit cet ordre. Thread dédié avec son propre appartement
+COM (STA), pour ne pas toucher à l'état COM du thread UI ; 30 ms entre deux
+fenêtres pour qu'Explorer garde la séquence. L'ordre n'est pas persistant :
+un redémarrage d'Explorer ou une fenêtre recréée par Dofus le défait.
+
 ### `title_regex` invalide en config = pas de crash
 
 Le watcher panique si la regex utilisateur ne compile pas. La config

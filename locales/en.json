@@ -15,6 +15,7 @@
     "tooltip_theme": "Toggle theme",
     "tooltip_lang": "Language",
     "tooltip_refresh": "Refresh",
+    "tooltip_sort_taskbar": "Sort the taskbar in this order",
     "tooltip_about": "About"
   },
   "about": {

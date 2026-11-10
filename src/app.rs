@@ -341,6 +341,18 @@ impl App {
         let _ = self.refresh_tx.send(());
     }
 
+    /// Reorders the live Dofus buttons in the Windows taskbar to match
+    /// `cycle_order` (the order shown in the app).
+    pub fn sort_taskbar(&self) {
+        let snap = self.windows.load();
+        let hwnds: Vec<isize> = self
+            .cycle_order
+            .iter()
+            .filter_map(|slot| snap.iter().find(|w| &w.slot_key == slot).map(|w| w.hwnd))
+            .collect();
+        win::taskbar::reorder_taskbar(hwnds);
+    }
+
     pub fn request_minimize(&self, ctx: &egui::Context) {
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
     }
