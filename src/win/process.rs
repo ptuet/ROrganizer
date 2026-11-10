@@ -22,7 +22,7 @@ pub fn exe_filename_cached(pid: u32, cache: &mut ExeCache) -> Option<&str> {
         .as_deref()
 }
 
-fn exe_filename_uncached(pid: u32) -> Option<String> {
+pub(crate) fn exe_filename_uncached(pid: u32) -> Option<String> {
     unsafe {
         let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
         let mut buf = [0u16; 1024];

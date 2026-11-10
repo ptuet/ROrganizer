@@ -38,6 +38,17 @@ fn is_dofus_exe(name: &str) -> bool {
     DOFUS_EXES.iter().any(|exe| name.eq_ignore_ascii_case(exe))
 }
 
+/// Whether `hwnd` belongs to a Dofus client process, whatever its title —
+/// login screen and secondary windows included. Used by the "shortcuts only
+/// in Dofus" option, only once a binding has matched (one process query per
+/// shortcut press, never per keystroke).
+pub fn is_dofus_window(hwnd: isize) -> bool {
+    let mut pid = 0u32;
+    unsafe { GetWindowThreadProcessId(HWND(hwnd as *mut _), Some(&mut pid)) };
+    pid != 0
+        && process::exe_filename_uncached(pid).is_some_and(|name| is_dofus_exe(&name))
+}
+
 #[derive(Debug, Clone, Hash)]
 pub struct DetectedWindow {
     pub hwnd: isize,
