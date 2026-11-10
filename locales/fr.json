@@ -28,7 +28,8 @@
     "open_config_dir": "Ouvrir le dossier de config",
     "close": "Fermer",
     "esc_hint": "Échap pour fermer",
-    "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)"
+    "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)",
+    "fork": "Fork maintenu par ptuet"
   },
   "tray": {
     "show": "Afficher",
