@@ -14,6 +14,7 @@ mod theme;
 mod tray;
 mod triggers;
 mod ui;
+mod zaaps;
 mod win;
 
 use std::sync::Arc;

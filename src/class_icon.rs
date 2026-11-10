@@ -37,7 +37,7 @@ fn normalize(s: &str) -> String {
         .collect()
 }
 
-fn strip_accent(c: char) -> char {
+pub(crate) fn strip_accent(c: char) -> char {
     match c {
         'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'À' | 'Á' | 'Â' | 'Ã' | 'Ä' | 'Å' => 'a',
         'è' | 'é' | 'ê' | 'ë' | 'È' | 'É' | 'Ê' | 'Ë' => 'e',

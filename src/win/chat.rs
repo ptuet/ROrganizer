@@ -1,4 +1,4 @@
-//! Sends chat commands to a Dofus window (group invite).
+//! Sends chat commands to Dofus windows (group invite, zaap for everyone).
 //!
 //! This is the only place where ROrganizer sends input to the game. The
 //! sequence mirrors what the Zaapy project validated on Dofus 3:
@@ -10,8 +10,9 @@
 //!   once per frame and would miss a press and release sent together;
 //! - after a command the chat **keeps the keyboard**, Escape gives it back.
 //!
-//! The chat is opened once, every command is pasted and sent in a row, and
-//! Escape closes it at the end: Space → (Ctrl+V → Enter) × N → Escape.
+//! In each window the chat is opened once, every command is pasted and sent
+//! in a row, and Escape closes it at the end:
+//! Space → (Ctrl+V → Enter) × N → Escape.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -59,17 +60,21 @@ pub fn is_busy() -> bool {
     SENDING.load(Ordering::Acquire)
 }
 
-/// Focuses `target` and sends each command through its chat, on a
-/// background thread. The global shortcuts are paused meanwhile, so the
-/// injected keys can't trigger a binding. Stops early if the user brings
-/// another window to the front. The clipboard's text is restored at the end.
-/// `on_done` runs once finished (the UI uses it to repaint).
-pub fn send_commands(
-    target: isize,
-    commands: Vec<String>,
+/// Commands to type in one window.
+pub type Step = (isize, Vec<String>);
+
+/// For each step in order, focuses the window and sends its commands through
+/// the chat, on a background thread; then brings `finish_on` to the front.
+/// The global shortcuts are paused meanwhile, so the injected keys can't
+/// trigger a binding. Stops everything if a window won't come to the front
+/// or the user brings another one forward. The clipboard's text is restored
+/// at the end. `on_done` runs once finished (the UI uses it to repaint).
+pub fn send_plan(
+    plan: Vec<Step>,
+    finish_on: Option<isize>,
     on_done: impl FnOnce() + Send + 'static,
 ) {
-    if commands.is_empty()
+    if plan.iter().all(|(_, cmds)| cmds.is_empty())
         || SENDING
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_err()
@@ -79,7 +84,10 @@ pub fn send_commands(
     thread::spawn(move || {
         crate::hooks::set_paused(true);
         let saved = read_clipboard_text();
-        run(target, &commands);
+        let completed = plan.iter().all(|(hwnd, cmds)| run(*hwnd, cmds));
+        if completed && let Some(hwnd) = finish_on {
+            focus_window(hwnd);
+        }
         match saved {
             Some(text) => {
                 set_clipboard_text(&text);
@@ -92,12 +100,17 @@ pub fn send_commands(
     });
 }
 
-fn run(target: isize, commands: &[String]) {
+/// Types `commands` in `target`. False if it had to stop (window not in
+/// front), so the caller doesn't go on with the next windows.
+fn run(target: isize, commands: &[String]) -> bool {
+    if commands.is_empty() {
+        return true;
+    }
     focus_window(target);
     let start = Instant::now();
     while foreground_window() != Some(target) {
         if start.elapsed() > FOCUS_TIMEOUT {
-            return;
+            return false;
         }
         thread::sleep(Duration::from_millis(25));
     }
@@ -108,7 +121,7 @@ fn run(target: isize, commands: &[String]) {
     for cmd in commands {
         // The user switched window: stop rather than type into it.
         if foreground_window() != Some(target) || !set_clipboard_text(cmd) {
-            return;
+            return false;
         }
         press(VK_CONTROL);
         thread::sleep(KEY_HOLD);
@@ -118,9 +131,11 @@ fn run(target: isize, commands: &[String]) {
         tap(VK_RETURN);
         thread::sleep(AFTER_SEND);
     }
-    if foreground_window() == Some(target) {
-        tap(VK_ESCAPE);
+    if foreground_window() != Some(target) {
+        return false;
     }
+    tap(VK_ESCAPE);
+    true
 }
 
 fn key_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
