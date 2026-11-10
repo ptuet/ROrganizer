@@ -135,6 +135,8 @@ pub struct App {
     /// User-overridden title regex from config, or `None` to use the
     /// built-in default. We persist whatever we loaded (round-trip stable).
     title_regex: Option<String>,
+    /// "–" and "Activer" minimize to the taskbar instead of the tray.
+    minimize_to_taskbar: bool,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
@@ -173,7 +175,7 @@ impl App {
         let config_path = config::default_path();
         let stored = config_path.as_ref().and_then(|p| config::load(p));
 
-        let (theme, lang, bindings, cycle_order, title_regex) = match stored {
+        let (theme, lang, bindings, cycle_order, title_regex, minimize_to_taskbar) = match stored {
             Some(cfg) => (
                 cfg.theme,
                 cfg.lang,
@@ -183,6 +185,7 @@ impl App {
                 // at startup. The user's broken value is replaced by None in
                 // memory; the next save flushes `null` to disk.
                 validate_title_regex(cfg.title_regex),
+                cfg.minimize_to_taskbar,
             ),
             None => (
                 Theme::Dark,
@@ -190,6 +193,7 @@ impl App {
                 HashMap::new(),
                 Vec::new(),
                 None,
+                false,
             ),
         };
         i18n::set_lang(lang);
@@ -239,6 +243,7 @@ impl App {
             hooks,
             conflicts_cache: None,
             title_regex,
+            minimize_to_taskbar,
             show_about: false,
             about_icon,
             class_icons,
@@ -282,7 +287,36 @@ impl App {
 
     pub fn request_activate(&mut self, ctx: &egui::Context) {
         self.set_active(true);
-        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        self.put_away(ctx);
+    }
+
+    /// Takes the window off screen, the way the user chose: minimized in
+    /// the taskbar (buttons stay one click away) or hidden in the tray.
+    fn put_away(&self, ctx: &egui::Context) {
+        let cmd = if self.minimize_to_taskbar {
+            egui::ViewportCommand::Minimized(true)
+        } else {
+            egui::ViewportCommand::Visible(false)
+        };
+        ctx.send_viewport_cmd(cmd);
+    }
+
+    /// Brings the window back on screen, whichever way it was put away.
+    fn bring_back(ctx: &egui::Context) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+    }
+
+    pub fn minimize_to_taskbar(&self) -> bool {
+        self.minimize_to_taskbar
+    }
+
+    pub fn set_minimize_to_taskbar(&mut self, on: bool) {
+        if self.minimize_to_taskbar != on {
+            self.minimize_to_taskbar = on;
+            self.mark_dirty();
+        }
     }
 
     pub fn request_deactivate(&mut self) {
@@ -356,7 +390,7 @@ impl App {
     }
 
     pub fn request_minimize(&self, ctx: &egui::Context) {
-        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        self.put_away(ctx);
     }
 
     pub fn request_close(&self, ctx: &egui::Context) {
@@ -512,6 +546,7 @@ impl App {
             lang: self.lang,
             theme: self.theme,
             title_regex: self.title_regex.clone(),
+            minimize_to_taskbar: self.minimize_to_taskbar,
         };
         let _ = config::save_atomic(path, &cfg);
     }
@@ -618,11 +653,10 @@ impl App {
             + CYCLE_BLOCK
             + toggle_h
             + TAIL_PAD;
-        // The About modal card is 380 px tall + 20 px padding. When it's
-        // open we force the viewport at least that tall so the card
-        // doesn't get clipped at the bottom — a clipped close button
-        // would visually look like the modal is broken.
-        const ABOUT_MIN: f32 = 420.0;
+        // While the About card is open we force
+        // the viewport at least that tall so the card doesn't get clipped at
+        // the bottom — a clipped close button would look like a broken modal.
+        const ABOUT_MIN: f32 = ui::about::ABOUT_CARD_HEIGHT;
         let mut desired = desired_content;
         if self.show_about {
             desired = desired.max(ABOUT_MIN);
@@ -642,10 +676,7 @@ impl eframe::App for App {
         let ctx = &ctx;
         while let Ok(ev) = self.tray_rx.try_recv() {
             match ev {
-                TrayEvent::ShowRequested => {
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
-                }
+                TrayEvent::ShowRequested => Self::bring_back(ctx),
                 TrayEvent::ToggleRequested => {
                     // The tray callback already called Win32 ShowWindow to
                     // wake the parked eframe loop. eframe's tracked
@@ -658,11 +689,11 @@ impl eframe::App for App {
                     self.set_active(new_active);
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
                     if new_active {
-                        // Tray Activer: hide window (running in background).
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+                        // Tray Activer: put the window away (running in background).
+                        self.put_away(ctx);
                     } else {
                         // Tray Désactiver: bring the window forward.
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+                        Self::bring_back(ctx);
                     }
                 }
             }

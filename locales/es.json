@@ -7,7 +7,8 @@
     "empty_hint": "Inicia Dofus para ver tus personajes aquí.",
     "activate": "Activar",
     "deactivate": "Desactivar",
-    "activate_hint": "se minimiza a la bandeja del sistema"
+    "activate_hint": "se minimiza a la bandeja del sistema",
+    "activate_hint_taskbar": "se minimiza en la barra de tareas"
   },
   "header": {
     "tooltip_minimize": "Minimizar a la bandeja",
@@ -24,7 +25,8 @@
     "report_bug": "Reportar un error",
     "open_config_dir": "Abrir carpeta de configuración",
     "close": "Cerrar",
-    "esc_hint": "Esc para cerrar"
+    "esc_hint": "Esc para cerrar",
+    "minimize_to_taskbar": "Minimizar en la barra de tareas (no la bandeja del sistema)"
   },
   "tray": {
     "show": "Mostrar",
