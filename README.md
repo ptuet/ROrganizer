@@ -6,12 +6,11 @@
 
 **Gère tes comptes Dofus Unity et Rétro au clavier. Open-source. Sans télémétrie.**
 
-*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**. Sans interagir avec Dofus, sans connexion réseau, sans usine à gaz.*
+*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**, invite toute ton équipe en groupe ou envoie-la au même zaap **d'un clic**. Sans connexion réseau, sans usine à gaz.*
 
-[![Site](https://img.shields.io/badge/site-rorganizer.loulouw--labs.fr-97c459?labelColor=1c1c1a)](https://rorganizer.loulouw-labs.fr)
-[![Version](https://img.shields.io/github/v/release/Loulouw/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/Loulouw/ROrganizer/releases)
+[![Version](https://img.shields.io/github/v/release/ptuet/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/ptuet/ROrganizer/releases)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#licence)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/Loulouw/ROrganizer/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/ptuet/ROrganizer/releases)
 [![Rust](https://img.shields.io/badge/rust-stable-orange?logo=rust)](https://www.rust-lang.org/)
 [![100% hors-ligne](https://img.shields.io/badge/100%25-hors--ligne-2ea44f)](#-respect-de-ta-vie-privée)
 
@@ -21,13 +20,31 @@
 
 ---
 
-> ⚠️ **Attention aux contrefaçons.** ROrganizer se télécharge **uniquement**
-> sur la page [Releases de ce dépôt GitHub](https://github.com/Loulouw/ROrganizer/releases),
+> 🍴 **Ceci est un fork** de [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer),
+> l'organizer open-source créé par **Loulouw**. Ce fork corrige quelques
+> problèmes rencontrés en jeu et ajoute des fonctionnalités pour le
+> multicompte. Tout le mérite de l'application de base revient à son auteur.
+
+## Deux versions, au choix
+
+| | **ROrganizer** | **ROrganizer vanilla** |
+|---|---|---|
+| Fichier | `ROrganizer-<version>-x86_64-windows.exe` | `ROrganizer-<version>-vanilla-x86_64-windows.exe` |
+| Changement de compte, cycle, tri, barre des tâches | ✅ | ✅ |
+| **Inviter tous les comptes en groupe** | ✅ | — |
+| **Envoyer tous les comptes au même zaap** | ✅ | — |
+| Envoie des commandes au jeu | **Oui**, uniquement quand tu cliques sur ces deux boutons | **Jamais** |
+
+Les deux se téléchargent sur la page [Releases](https://github.com/ptuet/ROrganizer/releases).
+Si tu veux un outil qui ne fait **que** changer de fenêtre, prends la
+version **vanilla**.
+
+> ⚠️ **Attention aux contrefaçons.** Les versions de ce fork se
+> téléchargent **uniquement** sur la page [Releases de ce dépôt](https://github.com/ptuet/ROrganizer/releases),
 > sous la forme d'**un seul exécutable**. Jamais dans une archive, jamais
 > sous forme de script, jamais depuis un hébergeur de fichiers ou un lien
-> partagé ailleurs. Tout fichier qui porte mon nom sans correspondre à
-> cette description ne vient pas de moi — voir [SECURITY.md](SECURITY.md)
-> pour vérifier ton téléchargement.
+> partagé ailleurs — voir [SECURITY.md](SECURITY.md) pour vérifier ton
+> téléchargement.
 
 ## Aperçu
 
@@ -51,16 +68,20 @@ tout.
   Personne d'autre ne peut en produire une. Voir
   [SECURITY.md](SECURITY.md).
 - 🛠️ **Pérennité**. Si le projet s'arrête, n'importe qui peut le
-  reprendre — ton outil ne meurt pas avec un seul mainteneur.
+  reprendre — ce fork en est la preuve.
 
 ## ✅ Respect de ta vie privée
 
-> **Hors-ligne · Aucune donnée collectée · Ne touche pas au jeu**
+> **Hors-ligne · Aucune donnée collectée**
 
 - L'app **ne se connecte à aucun serveur**, jamais.
-- L'app **ne touche pas à Dofus** : elle ne le lit pas, ne le modifie
-  pas, ne lui envoie rien. Elle se contente d'écouter tes raccourcis
-  et de mettre la bonne fenêtre devant.
+- L'app **ne lit pas Dofus et ne le modifie pas**. Pour changer de
+  compte, elle se contente d'écouter tes raccourcis et de mettre la
+  bonne fenêtre devant.
+- **Seuls les boutons « invitation de groupe » et « zaap »** envoient
+  quelque chose au jeu : ils tapent pour toi `/invite <pseudo>` ou
+  `/zaap x,y` dans le chat, et seulement quand tu cliques dessus. La
+  version **vanilla** n'a pas ces boutons.
 - **Aucune frappe clavier n'est enregistrée**. Les raccourcis sont
   identifiés à la volée puis oubliés.
 - Le seul fichier que l'app écrit, c'est **sa propre configuration**
@@ -77,11 +98,23 @@ tout.
 
 - 🔍 **Détection automatique** de tes comptes dès qu'ils sont lancés, que
   tu joues sur **Dofus**, **Dofus Rétro** ou **Dofus Expérimental**
-- 🎯 **Un raccourci par compte** : touche du clavier ou bouton de souris
-- 🔄 **Cycle entre tes comptes** avec un raccourci suivant / précédent
+- 🎯 **Un raccourci par compte** : touche du clavier ou bouton de souris,
+  y compris les touches d'un clavier **AZERTY** comme `²`, `ù` ou `)`
+- 🔄 **Cycle entre tes comptes** avec un raccourci suivant / précédent —
+  **deux raccourcis possibles** pour chacun (une touche et un bouton de
+  souris, par exemple)
+- 🖱️ **Le cycle suit la fenêtre active** : si tu changes de compte à la
+  souris, le « suivant » repart de là où tu es vraiment
 - ✋ **Glisse-dépose** pour ranger tes comptes dans l'ordre que tu veux
+- 📊 **Tri de la barre des tâches** Windows dans le même ordre, d'un clic
+- 👥 **Invitation de groupe** : le premier compte de la liste invite tous
+  les autres
+- 🌀 **Zaap pour tous** : cherche un zaap par son nom, et tous tes comptes
+  s'y téléportent (`/zaap`, Dofus 3.7+)
 - 🌓 **Thème clair ou sombre**, en FR / EN / ES
-- 📍 **Discret dans la barre système** Windows, activable d'un clic
+- 📍 **Discret** : réduit dans la barre système, ou dans la barre des
+  tâches si tu préfères garder les boutons à un clic (option dans les
+  réglages)
 
 ## Démarrage en 3 étapes
 
@@ -89,9 +122,9 @@ tout.
 
 | 1️⃣ &nbsp; **Télécharge** | 2️⃣ &nbsp; **Lance** | 3️⃣ &nbsp; **Configure** |
 |:--|:--|:--|
-| Récupère le `.exe` depuis [Releases](https://github.com/Loulouw/ROrganizer/releases). Aucun installeur, aucune dépendance. | Double-clique sur l'`.exe`. C'est tout. ROrganizer détecte automatiquement tes comptes Dofus déjà lancés. | Clique sur **« définir »** à côté d'un compte, puis presse la touche ou le bouton de souris que tu veux lui attribuer. |
+| Récupère le `.exe` de la version de ton choix depuis [Releases](https://github.com/ptuet/ROrganizer/releases). Aucun installeur, aucune dépendance. | Double-clique sur l'`.exe`. C'est tout. ROrganizer détecte automatiquement tes comptes Dofus déjà lancés. | Clique sur **« définir »** à côté d'un compte, puis presse la touche ou le bouton de souris que tu veux lui attribuer. |
 
-[![Télécharger ROrganizer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_T%C3%A9l%C3%A9charger_ROrganizer-97c459?style=for-the-badge&labelColor=1c1c1a)](https://github.com/Loulouw/ROrganizer/releases/latest)
+[![Télécharger ROrganizer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_T%C3%A9l%C3%A9charger_ROrganizer-97c459?style=for-the-badge&labelColor=1c1c1a)](https://github.com/ptuet/ROrganizer/releases/latest)
 
 </div>
 
@@ -103,6 +136,8 @@ Compatible Windows 10 et Windows 11.
 > cargo build --release
 > .\target\release\rorganizer.exe
 > ```
+> La branche `main` donne la version complète, la branche `vanilla` la
+> version sans commandes envoyées au jeu.
 
 ## FAQ
 
@@ -120,11 +155,19 @@ silencieuse en arrière-plan jusqu'à ce que tu presses un de tes
 raccourcis.
 
 **Est-ce que je risque de me faire bannir ?**
-ROrganizer **n'interagit pas avec Dofus**. Il ne lit pas le jeu, ne
-le modifie pas, ne lui envoie aucune commande. Il se contente de
-faire passer une fenêtre devant — exactement comme `Alt+Tab` le fait
-dans Windows. Cela dit, l'utilisation d'outils tiers reste à tes
-risques au regard des conditions générales d'utilisation d'Ankama.
+Pour le changement de compte, ROrganizer **n'interagit pas avec
+Dofus** : il fait passer une fenêtre devant, exactement comme
+`Alt+Tab`. Les boutons **invitation de groupe** et **zaap** vont plus
+loin : ils tapent des commandes de chat dans plusieurs comptes à partir
+d'un seul clic. Ankama ne publie pas de règle claire sur ce point, et
+une action qui agit sur plusieurs comptes à la fois est la zone la plus
+sensible. Si tu veux éviter tout risque, utilise la version **vanilla**.
+Dans tous les cas, l'utilisation d'outils tiers reste à tes risques au
+regard des conditions générales d'utilisation d'Ankama.
+
+**Les boutons invitation et zaap ne font rien, ou ouvrent le menu du jeu ?**
+L'app ouvre le chat avec la touche **Espace**. Si tu l'as changée dans
+les raccourcis de Dofus, remets **Espace** pour « ouvrir le chat ».
 
 **Mes raccourcis marchent-ils pendant que je suis en jeu ?**
 Oui. Les raccourcis sont écoutés **au niveau global de Windows**,
@@ -141,7 +184,7 @@ par précaution sur tout exécutable peu connu. Clique sur
 Pour vérifier que tu as bien le bon binaire, la marche à suivre est
 détaillée dans [SECURITY.md](SECURITY.md) : comparaison du **SHA256**
 affiché par GitHub sur la page de la release, et **attestation de
-provenance** vérifiable en une commande à partir de la 1.3.0.
+provenance** vérifiable en une commande.
 
 **Mon antivirus détecte un « trojan », l'app est-elle dangereuse ?**
 Non, c'est un **faux positif**. Pour déclencher tes raccourcis même
@@ -155,16 +198,28 @@ attribuée automatiquement, pas l'identification d'un virus connu.
 Ce que tu peux vérifier toi-même : le code source est public,
 **aucune frappe clavier n'est enregistrée** et l'app **ne se connecte
 à aucun serveur** — constatable dans le Moniteur de ressources
-Windows. Chaque faux positif est signalé à Microsoft à la publication
-d'une release, mais la correction met quelques jours à se propager. En
-attendant, tu peux ajouter l'`.exe` en exclusion dans ton antivirus,
-après avoir vérifié son SHA256.
+Windows. En attendant que Microsoft corrige le faux positif, tu peux
+ajouter l'`.exe` en exclusion dans ton antivirus, après avoir vérifié
+son SHA256.
 
 **Comment je désinstalle l'application ?**
 Supprime simplement l'`.exe`. Tes préférences sont stockées dans
 `%APPDATA%\rorganizer\` — tu peux supprimer ce dossier pour un
 nettoyage complet. **Aucun registre Windows modifié, aucun service
 installé.**
+
+**Je trouve un bug, je le signale où ?**
+Dans les [issues de ce fork](https://github.com/ptuet/ROrganizer/issues),
+ou via **« Signaler un bug »** dans les réglages de l'app. Pour un bug
+qui existe aussi dans la version d'origine, tu peux aussi le signaler à
+[l'auteur](https://github.com/Loulouw/ROrganizer/issues).
+
+## Crédits
+
+ROrganizer a été créé par **[Loulouw](https://github.com/Loulouw)** —
+dépôt d'origine : [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer).
+Ce fork est maintenu par **[ptuet](https://github.com/ptuet)**. La liste
+des zaaps vient de la base communautaire [DofusDB](https://dofusdb.fr).
 
 ## Disclaimer
 
