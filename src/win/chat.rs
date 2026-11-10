@@ -10,7 +10,8 @@
 //!   once per frame and would miss a press and release sent together;
 //! - after a command the chat **keeps the keyboard**, Escape gives it back.
 //!
-//! Per command: Enter (open chat) → Ctrl+V → Enter (send) → Escape.
+//! The chat is opened once, every command is pasted and sent in a row, and
+//! Escape closes it at the end: Space → (Ctrl+V → Enter) × N → Escape.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -25,7 +26,7 @@ use windows::Win32::System::Memory::{
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     MapVirtualKeyW, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VIRTUAL_KEY, VK_CONTROL, VK_ESCAPE, VK_RETURN,
+    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VIRTUAL_KEY, VK_CONTROL, VK_ESCAPE, VK_RETURN, VK_SPACE,
 };
 
 use super::focus::{focus_window, foreground_window};
@@ -33,14 +34,17 @@ use super::focus::{focus_window, foreground_window};
 const CF_UNICODETEXT: u32 = 13;
 const VK_V: VIRTUAL_KEY = VIRTUAL_KEY(0x56);
 
+/// Key that opens the chat. Dofus lets players rebind it; Space is what the
+/// author's client uses (Enter did nothing there).
+const VK_OPEN_CHAT: VIRTUAL_KEY = VK_SPACE;
 /// How long each key stays down.
-const KEY_HOLD: Duration = Duration::from_millis(25);
-/// Between the steps of one command (chat opening, paste, send).
-const STEP_DELAY: Duration = Duration::from_millis(60);
-/// After a command is sent, before Escape: lets the game process it.
+const KEY_HOLD: Duration = Duration::from_millis(30);
+/// After opening the chat, and between paste and send: the input needs a
+/// few frames to take the text.
+const STEP_DELAY: Duration = Duration::from_millis(120);
+/// After a command is sent: lets the game process it and clear the input
+/// before the next paste (or the final Escape).
 const AFTER_SEND: Duration = Duration::from_millis(150);
-/// Between two commands.
-const BETWEEN_COMMANDS: Duration = Duration::from_millis(300);
 /// Maximum wait for the target window to come to the foreground.
 const FOCUS_TIMEOUT: Duration = Duration::from_millis(800);
 /// Once in front, lets the client settle before the first key.
@@ -99,16 +103,13 @@ fn run(target: isize, commands: &[String]) {
     }
     thread::sleep(FOCUS_SETTLE);
 
-    for (i, cmd) in commands.iter().enumerate() {
-        if i > 0 {
-            thread::sleep(BETWEEN_COMMANDS);
-        }
+    tap(VK_OPEN_CHAT);
+    thread::sleep(STEP_DELAY);
+    for cmd in commands {
         // The user switched window: stop rather than type into it.
         if foreground_window() != Some(target) || !set_clipboard_text(cmd) {
             return;
         }
-        tap(VK_RETURN);
-        thread::sleep(STEP_DELAY);
         press(VK_CONTROL);
         thread::sleep(KEY_HOLD);
         tap(VK_V);
@@ -116,6 +117,8 @@ fn run(target: isize, commands: &[String]) {
         thread::sleep(STEP_DELAY);
         tap(VK_RETURN);
         thread::sleep(AFTER_SEND);
+    }
+    if foreground_window() == Some(target) {
         tap(VK_ESCAPE);
     }
 }

@@ -581,15 +581,22 @@ par DWM, `FromPoint` traverse le popup.
 l'app (qui ne fait que changer de fenêtre), c'est de l'injection d'entrées
 dans Dofus — à garder en tête vis-à-vis des CGU d'Ankama.
 
-Séquence reprise de Zaapy (validée sur Dofus 3), par commande :
-Entrée → Ctrl+V → Entrée → Échap.
+Séquence validée en jeu sur Dofus 3 (3 comptes) :
+Espace → (Ctrl+V → Entrée) × N → Échap. Le chat n'est ouvert qu'une fois :
+il garde le clavier après chaque envoi, le refermer/rouvrir entre deux
+commandes ne fait que ralentir.
+- **Espace ouvre le chat** (`VK_OPEN_CHAT`) sur le client de l'auteur ;
+  Entrée n'y fait rien. La touche est réassignable dans Dofus : un joueur
+  qui l'a changée verra Échap ouvrir le menu du jeu.
+- Délais : touche maintenue 30 ms, 120 ms après ouverture du chat et entre
+  collage et envoi, 150 ms après chaque envoi. Une 1ʳᵉ version à 60 ms
+  avec Entrée échouait (mauvaise touche, pas un problème de délai).
 - **Coller, pas taper** : la commande passe par le presse-papiers, dont le
   texte est restauré à la fin.
 - **Scan code obligatoire** (`MAPVK_VK_TO_VSC`) : Dofus lit la touche physique,
   un VK seul est ignoré.
-- **Touche maintenue 25 ms, appui et relâche en deux `SendInput`** : le client
-  lit le clavier une fois par frame.
-- **Échap après envoi** : le chat garde le clavier après une commande.
+- **Appui et relâche en deux `SendInput`** : le client lit le clavier une
+  fois par frame.
 - Raccourcis en pause pendant l'envoi (`hooks::set_paused`, distinct de
   `HOOK_ENABLED` qui appartient à l'utilisateur), un seul envoi à la fois,
   arrêt si l'utilisateur change de fenêtre en cours de route.
