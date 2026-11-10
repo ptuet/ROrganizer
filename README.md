@@ -6,7 +6,7 @@
 
 **Gère tes comptes Dofus Unity et Rétro au clavier. Open-source. Sans télémétrie.**
 
-*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**, invite toute ton équipe en groupe ou envoie-la au même zaap **d'un clic**. Sans connexion réseau, sans usine à gaz.*
+*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**. Sans interagir avec Dofus, sans connexion réseau, sans usine à gaz.*
 
 [![Version](https://img.shields.io/github/v/release/ptuet/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/ptuet/ROrganizer/releases)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#licence)
@@ -24,6 +24,9 @@
 > l'organizer open-source créé par **Loulouw**. Ce fork corrige quelques
 > problèmes rencontrés en jeu et ajoute des fonctionnalités pour le
 > multicompte. Tout le mérite de l'application de base revient à son auteur.
+>
+> Tu lis la branche **`vanilla`** : la version qui **n'envoie jamais rien au
+> jeu**. La version complète est décrite sur la [branche `main`](https://github.com/ptuet/ROrganizer).
 
 ## Deux versions, au choix
 
@@ -72,16 +75,12 @@ tout.
 
 ## ✅ Respect de ta vie privée
 
-> **Hors-ligne · Aucune donnée collectée**
+> **Hors-ligne · Aucune donnée collectée · Ne touche pas au jeu**
 
 - L'app **ne se connecte à aucun serveur**, jamais.
-- L'app **ne lit pas Dofus et ne le modifie pas**. Pour changer de
-  compte, elle se contente d'écouter tes raccourcis et de mettre la
-  bonne fenêtre devant.
-- **Seuls les boutons « invitation de groupe » et « zaap »** envoient
-  quelque chose au jeu : ils tapent pour toi `/invite <pseudo>` ou
-  `/zaap x,y` dans le chat, et seulement quand tu cliques dessus. La
-  version **vanilla** n'a pas ces boutons.
+- L'app **ne touche pas à Dofus** : elle ne le lit pas, ne le modifie
+  pas, ne lui envoie rien. Elle se contente d'écouter tes raccourcis
+  et de mettre la bonne fenêtre devant.
 - **Aucune frappe clavier n'est enregistrée**. Les raccourcis sont
   identifiés à la volée puis oubliés.
 - Le seul fichier que l'app écrit, c'est **sa propre configuration**
@@ -107,14 +106,9 @@ tout.
   souris, le « suivant » repart de là où tu es vraiment
 - ✋ **Glisse-dépose** pour ranger tes comptes dans l'ordre que tu veux
 - 📊 **Tri de la barre des tâches** Windows dans le même ordre, d'un clic
-- 👥 **Invitation de groupe** : le premier compte de la liste invite tous
-  les autres
-- 🌀 **Zaap pour tous** : cherche un zaap par son nom, et tous tes comptes
-  s'y téléportent (`/zaap`, Dofus 3.7+)
 - 🌓 **Thème clair ou sombre**, en FR / EN / ES
 - 📍 **Discret** : réduit dans la barre système, ou dans la barre des
-  tâches si tu préfères garder les boutons à un clic (option dans les
-  réglages)
+  tâches si tu préfères (option dans les réglages)
 
 ## Démarrage en 3 étapes
 
@@ -155,19 +149,11 @@ silencieuse en arrière-plan jusqu'à ce que tu presses un de tes
 raccourcis.
 
 **Est-ce que je risque de me faire bannir ?**
-Pour le changement de compte, ROrganizer **n'interagit pas avec
-Dofus** : il fait passer une fenêtre devant, exactement comme
-`Alt+Tab`. Les boutons **invitation de groupe** et **zaap** vont plus
-loin : ils tapent des commandes de chat dans plusieurs comptes à partir
-d'un seul clic. Ankama ne publie pas de règle claire sur ce point, et
-une action qui agit sur plusieurs comptes à la fois est la zone la plus
-sensible. Si tu veux éviter tout risque, utilise la version **vanilla**.
-Dans tous les cas, l'utilisation d'outils tiers reste à tes risques au
-regard des conditions générales d'utilisation d'Ankama.
-
-**Les boutons invitation et zaap ne font rien, ou ouvrent le menu du jeu ?**
-L'app ouvre le chat avec la touche **Espace**. Si tu l'as changée dans
-les raccourcis de Dofus, remets **Espace** pour « ouvrir le chat ».
+La version vanilla **n'interagit pas avec Dofus**. Elle ne lit pas le
+jeu, ne le modifie pas, ne lui envoie aucune commande. Elle se contente
+de faire passer une fenêtre devant — exactement comme `Alt+Tab` le fait
+dans Windows. Cela dit, l'utilisation d'outils tiers reste à tes
+risques au regard des conditions générales d'utilisation d'Ankama.
 
 **Mes raccourcis marchent-ils pendant que je suis en jeu ?**
 Oui. Les raccourcis sont écoutés **au niveau global de Windows**,
@@ -218,8 +204,7 @@ qui existe aussi dans la version d'origine, tu peux aussi le signaler à
 
 ROrganizer a été créé par **[Loulouw](https://github.com/Loulouw)** —
 dépôt d'origine : [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer).
-Ce fork est maintenu par **[ptuet](https://github.com/ptuet)**. La liste
-des zaaps vient de la base communautaire [DofusDB](https://dofusdb.fr).
+Ce fork est maintenu par **[ptuet](https://github.com/ptuet)**.
 
 ## Disclaimer
 
