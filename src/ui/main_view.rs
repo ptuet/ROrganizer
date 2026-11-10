@@ -204,16 +204,40 @@ fn paint_sort_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
     }
 }
 
-/// "Zaap": a portal, two concentric rings on a short base.
+/// "Zaap": a round horseshoe arch on two feet and a base, a teleport vortex
+/// inside — modelled on Ganymède's zaap icon. Coordinates are in the 26×22
+/// button space, same as the SVG mock-up it was picked from.
 fn paint_zaap_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
-    let c = rect.center() + egui::vec2(0.0, -1.0);
-    painter.circle_stroke(c, 6.0, stroke);
-    painter.circle_stroke(c, 2.5, stroke);
-    let base_y = c.y + 8.0;
-    painter.line_segment(
-        [egui::pos2(c.x - 5.0, base_y), egui::pos2(c.x + 5.0, base_y)],
-        stroke,
-    );
+    use std::f32::consts::PI;
+    let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
+    let (cx, cy) = (13.0, 10.5);
+
+    // Horseshoe: a circle open at the bottom, from 125° round to 415°
+    // (y points down, so the gap is under the centre).
+    let arch: Vec<egui::Pos2> = (0..=32)
+        .map(|i| {
+            let a = (125.0 + 290.0 * (i as f32 / 32.0)).to_radians();
+            p(cx + 7.2 * a.cos(), cy + 7.2 * a.sin())
+        })
+        .collect();
+    let (left_end, right_end) = (arch[0], arch[32]);
+    painter.add(egui::Shape::line(arch, stroke));
+
+    // Feet down to the base.
+    painter.line_segment([left_end, p(7.6, 19.0)], stroke);
+    painter.line_segment([right_end, p(18.4, 19.0)], stroke);
+    painter.line_segment([p(5.5, 19.0), p(20.5, 19.0)], stroke);
+
+    // Vortex: Archimedean spiral, 1.5 turns, radius 0.3 → 3.6.
+    let turns = 3.0 * PI;
+    let spiral: Vec<egui::Pos2> = (0..=40)
+        .map(|i| {
+            let t = turns * (i as f32 / 40.0);
+            let r = 0.3 + 3.3 * (t / turns);
+            p(cx + r * t.cos(), cy + r * t.sin())
+        })
+        .collect();
+    painter.add(egui::Shape::line(spiral, stroke));
 }
 
 /// "Invite": a person (head + shoulders) with a "+" on its right.
