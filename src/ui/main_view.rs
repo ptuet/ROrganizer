@@ -39,7 +39,7 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                 theme,
                 ordered.len(),
                 || app.request_refresh(),
-                || app.sort_taskbar(),
+                || app.sort_taskbar(ctx),
             );
             ui.add_space(10.0);
 
@@ -136,8 +136,11 @@ fn draw_summary(
                 on_refresh();
             }
             // Sorting only means something with 2+ windows.
-            if count >= 2 && sort_taskbar_button(ui, theme).clicked() {
-                on_sort_taskbar();
+            if count >= 2 {
+                let busy = win::taskbar::is_sorting();
+                if sort_taskbar_button(ui, theme, busy).clicked() && !busy {
+                    on_sort_taskbar();
+                }
             }
         });
     });
@@ -145,14 +148,20 @@ fn draw_summary(
 
 /// "Sort" icon (three left-aligned bars of decreasing length), drawn by hand
 /// so it doesn't depend on a glyph being present in the bundled fonts.
-fn sort_taskbar_button(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
+/// Greyed out and inert while a reorder is running (`busy`).
+fn sort_taskbar_button(ui: &mut egui::Ui, theme: Theme, busy: bool) -> egui::Response {
     let size = Vec2::new(26.0, 22.0);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
-    if response.hovered() {
+    if response.hovered() && !busy {
         ui.painter().rect_filled(rect, 4.0, theme::hover_bg(theme));
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
     }
-    let stroke = Stroke::new(1.5, theme::text_secondary(theme));
+    let color = if busy {
+        theme::text_tertiary(theme)
+    } else {
+        theme::text_secondary(theme)
+    };
+    let stroke = Stroke::new(1.5, color);
     let left = rect.center().x - 5.0;
     for (i, len) in [10.0, 7.0, 4.0].into_iter().enumerate() {
         let y = rect.center().y - 4.0 + i as f32 * 4.0;

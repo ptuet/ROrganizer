@@ -342,15 +342,17 @@ impl App {
     }
 
     /// Reorders the live Dofus buttons in the Windows taskbar to match
-    /// `cycle_order` (the order shown in the app).
-    pub fn sort_taskbar(&self) {
+    /// `cycle_order` (the order shown in the app). Repaints once done so the
+    /// greyed-out button comes back.
+    pub fn sort_taskbar(&self, ctx: &egui::Context) {
         let snap = self.windows.load();
         let hwnds: Vec<isize> = self
             .cycle_order
             .iter()
             .filter_map(|slot| snap.iter().find(|w| &w.slot_key == slot).map(|w| w.hwnd))
             .collect();
-        win::taskbar::reorder_taskbar(hwnds);
+        let ctx = ctx.clone();
+        win::taskbar::reorder_taskbar(hwnds, move || ctx.request_repaint());
     }
 
     pub fn request_minimize(&self, ctx: &egui::Context) {

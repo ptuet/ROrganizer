@@ -4,6 +4,7 @@
 //! that a button re-added with `ITaskbarList::AddTab` lands at the end, so
 //! removing and re-adding every window in the wanted order yields that order.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
@@ -22,21 +23,47 @@ use windows::Win32::UI::Shell::{ITaskbarList, TaskbarList};
 /// CPU load. 100 ms keeps a margin.
 const STEP_DELAY: Duration = Duration::from_millis(100);
 
+/// Set while a reorder runs. Two overlapping passes interleave their
+/// Delete/Add calls and produce a wrong order, so a second request is
+/// dropped instead of queued.
+static SORTING: AtomicBool = AtomicBool::new(false);
+
+/// True while a reorder is in progress (the UI greys its button).
+pub fn is_sorting() -> bool {
+    SORTING.load(Ordering::Acquire)
+}
+
 /// Re-adds each window's taskbar button in `hwnds` order. Runs on a
 /// short-lived thread with its own COM apartment, leaving the UI thread's
-/// COM state untouched. Best-effort: failures are silently ignored.
-pub fn reorder_taskbar(hwnds: Vec<isize>) {
+/// COM state untouched. Ignored while a previous reorder is still running.
+/// `on_done` runs at the end (the UI uses it to repaint the button).
+/// Best-effort: failures are silently ignored.
+pub fn reorder_taskbar(hwnds: Vec<isize>, on_done: impl FnOnce() + Send + 'static) {
     if hwnds.len() < 2 {
         return;
     }
-    thread::spawn(move || unsafe {
+    if SORTING
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        return;
+    }
+    thread::spawn(move || {
+        unsafe { reorder(&hwnds) };
+        SORTING.store(false, Ordering::Release);
+        on_done();
+    });
+}
+
+unsafe fn reorder(hwnds: &[isize]) {
+    unsafe {
         if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_err() {
             return;
         }
         if let Ok(list) = CoCreateInstance::<_, ITaskbarList>(&TaskbarList, None, CLSCTX_INPROC_SERVER)
             && list.HrInit().is_ok()
         {
-            for h in hwnds {
+            for &h in hwnds {
                 let hwnd = HWND(h as *mut _);
                 let _ = list.DeleteTab(hwnd);
                 thread::sleep(STEP_DELAY);
@@ -45,5 +72,5 @@ pub fn reorder_taskbar(hwnds: Vec<isize>) {
             }
         }
         CoUninitialize();
-    });
+    }
 }
