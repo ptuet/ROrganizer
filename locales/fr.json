@@ -7,7 +7,8 @@
     "empty_hint": "Lance Dofus pour voir tes personnages ici.",
     "activate": "Activer",
     "deactivate": "Désactiver",
-    "activate_hint": "se réduit dans la barre système"
+    "activate_hint": "se réduit dans la barre système",
+    "activate_hint_taskbar": "se réduit dans la barre des tâches"
   },
   "header": {
     "tooltip_minimize": "Réduire dans la barre système",
@@ -26,7 +27,8 @@
     "report_bug": "Signaler un bug",
     "open_config_dir": "Ouvrir le dossier de config",
     "close": "Fermer",
-    "esc_hint": "Échap pour fermer"
+    "esc_hint": "Échap pour fermer",
+    "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)"
   },
   "tray": {
     "show": "Afficher",

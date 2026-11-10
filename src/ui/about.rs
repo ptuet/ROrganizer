@@ -21,6 +21,9 @@ const WEBSITE_URL: &str = "https://rorganizer.loulouw-labs.fr";
 /// langues sans traduction, donc pas de clé i18n.
 const WEBSITE_LABEL: &str = "rorganizer.loulouw-labs.fr";
 const LICENSE_LABEL: &str = "MIT OR Apache-2.0";
+/// Card height; `App::apply_dynamic_height` keeps the viewport at least this
+/// tall while the modal is open, so the close button is never clipped.
+pub const ABOUT_CARD_HEIGHT: f32 = 450.0;
 
 pub fn draw(ctx: &egui::Context, app: &mut App) {
     if !app.is_about_open() {
@@ -49,7 +52,7 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
 
     // Width fits inside the 340-wide viewport with a 10 px breathing room
     // on each side. Height is sized to comfortably hold every section.
-    let card_size = egui::vec2(320.0, 420.0);
+    let card_size = egui::vec2(320.0, ABOUT_CARD_HEIGHT);
     let card_rect = egui::Rect::from_center_size(screen_rect.center(), card_size);
 
     let close_clicked = std::cell::Cell::new(false);
@@ -178,6 +181,19 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                         .clicked()
                         {
                             config_dir_clicked = true;
+                        }
+                        ui.add_space(8.0);
+                        let mut to_taskbar = app.minimize_to_taskbar();
+                        if ui
+                            .checkbox(
+                                &mut to_taskbar,
+                                egui::RichText::new(t!("about.minimize_to_taskbar"))
+                                    .size(12.0)
+                                    .color(theme::text_secondary(theme)),
+                            )
+                            .changed()
+                        {
+                            app.set_minimize_to_taskbar(to_taskbar);
                         }
 
                         ui.add_space(12.0);

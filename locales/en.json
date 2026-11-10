@@ -7,7 +7,8 @@
     "empty_hint": "Launch Dofus to see your characters here.",
     "activate": "Activate",
     "deactivate": "Deactivate",
-    "activate_hint": "minimizes to the system tray"
+    "activate_hint": "minimizes to the system tray",
+    "activate_hint_taskbar": "minimizes to the taskbar"
   },
   "header": {
     "tooltip_minimize": "Minimize to system tray",
@@ -26,7 +27,8 @@
     "report_bug": "Report a bug",
     "open_config_dir": "Open config folder",
     "close": "Close",
-    "esc_hint": "Esc to close"
+    "esc_hint": "Esc to close",
+    "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)"
   },
   "tray": {
     "show": "Show",
