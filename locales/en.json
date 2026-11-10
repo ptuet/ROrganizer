@@ -19,7 +19,8 @@
     "tooltip_sort_taskbar": "Sort the taskbar in this order",
     "tooltip_invite_group": "Invite every account into the first one's group",
     "tooltip_about": "About",
-    "tooltip_zaap_group": "Send every account to the same zaap"
+    "tooltip_zaap_group": "Send every account to the same zaap",
+    "tooltip_sort_initiative": "Sort accounts by initiative (group panel)"
   },
   "about": {
     "credit": "Built by Loulouw with the help of Claude",
@@ -30,7 +31,8 @@
     "esc_hint": "Esc to close",
     "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)",
     "fork": "Fork maintained by ptuet",
-    "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front"
+    "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front",
+    "calibrate_panel": "Calibrate the group panel"
   },
   "tray": {
     "show": "Show",
@@ -58,5 +60,19 @@
     "search_hint": "Search a zaap…",
     "no_result": "No zaap found",
     "hint": "Click or Enter: every account goes there · Esc to close"
+  },
+  "initiative": {
+    "calib_title": "Group panel calibration",
+    "calib_step1": "Put the mouse on the 1st portrait of the group, in Dofus",
+    "calib_step2": "Put the mouse on the 2nd portrait of the group",
+    "calib_hint": "The position is taken when the countdown ends · Esc to cancel",
+    "calib_done": "Group panel calibrated on %{name}'s window",
+    "calib_not_dofus": "Calibration cancelled: the mouse was not on a Dofus account window",
+    "calib_same": "Calibration cancelled: the 2nd portrait must be in the same window, somewhere else",
+    "sorted": "Sorted by initiative: %{list}",
+    "panel_not_found": "Group panel not found: make sure you are in a group, or calibrate it again in the settings",
+    "window_missing": "Launch %{name}: its window was used for the calibration",
+    "window_unavailable": "Could not switch to the calibrated window",
+    "no_match": "No group member matches a launched account"
   }
 }

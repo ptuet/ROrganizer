@@ -19,7 +19,8 @@
     "tooltip_sort_taskbar": "Ordenar la barra de tareas en este orden",
     "tooltip_invite_group": "Invitar a todas las cuentas al grupo de la primera",
     "tooltip_about": "Acerca de",
-    "tooltip_zaap_group": "Enviar todas las cuentas al mismo zaap"
+    "tooltip_zaap_group": "Enviar todas las cuentas al mismo zaap",
+    "tooltip_sort_initiative": "Ordenar las cuentas por iniciativa (panel de grupo)"
   },
   "about": {
     "credit": "Desarrollado por Loulouw con la ayuda de Claude",
@@ -30,7 +31,8 @@
     "esc_hint": "Esc para cerrar",
     "minimize_to_taskbar": "Minimizar en la barra de tareas (no la bandeja del sistema)",
     "fork": "Fork mantenido por ptuet",
-    "shortcuts_only_in_dofus": "Atajos activos solo cuando Dofus está en primer plano"
+    "shortcuts_only_in_dofus": "Atajos activos solo cuando Dofus está en primer plano",
+    "calibrate_panel": "Calibrar el panel de grupo"
   },
   "tray": {
     "show": "Mostrar",
@@ -58,5 +60,19 @@
     "search_hint": "Buscar un zaap…",
     "no_result": "Ningún zaap encontrado",
     "hint": "Clic o Intro: todas las cuentas van allí · Esc para cerrar"
+  },
+  "initiative": {
+    "calib_title": "Calibración del panel de grupo",
+    "calib_step1": "Pon el ratón sobre el 1.er retrato del grupo, en Dofus",
+    "calib_step2": "Pon el ratón sobre el 2.º retrato del grupo",
+    "calib_hint": "La posición se toma al final de la cuenta atrás · Esc para cancelar",
+    "calib_done": "Panel de grupo calibrado en la ventana de %{name}",
+    "calib_not_dofus": "Calibración cancelada: el ratón no estaba sobre una ventana de cuenta de Dofus",
+    "calib_same": "Calibración cancelada: el 2.º retrato debe estar en la misma ventana, en otro sitio",
+    "sorted": "Ordenado por iniciativa: %{list}",
+    "panel_not_found": "Panel de grupo no encontrado: comprueba que estás en grupo o vuelve a calibrarlo en los ajustes",
+    "window_missing": "Abre %{name}: su ventana se usó para la calibración",
+    "window_unavailable": "No se pudo cambiar a la ventana calibrada",
+    "no_match": "Ningún miembro del grupo coincide con una cuenta abierta"
   }
 }

@@ -22,7 +22,7 @@ const ISSUES_URL: &str = "https://github.com/ptuet/ROrganizer/issues";
 const LICENSE_LABEL: &str = "MIT OR Apache-2.0";
 /// Card height; `App::apply_dynamic_height` keeps the viewport at least this
 /// tall while the modal is open, so the close button is never clipped.
-pub const ABOUT_CARD_HEIGHT: f32 = 476.0;
+pub const ABOUT_CARD_HEIGHT: f32 = 516.0;
 
 pub fn draw(ctx: &egui::Context, app: &mut App) {
     if !app.is_about_open() {
@@ -58,6 +58,7 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     let mut config_dir_clicked = false;
     let mut github_clicked = false;
     let mut bug_clicked = false;
+    let mut calibrate_clicked = false;
 
     egui::Area::new(egui::Id::new("about_overlay"))
         .order(egui::Order::Foreground)
@@ -169,6 +170,17 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                             config_dir_clicked = true;
                         }
                         ui.add_space(8.0);
+                        if action_row(
+                            ui,
+                            theme,
+                            &t!("about.calibrate_panel"),
+                            CALIBRATE_GLYPH,
+                        )
+                        .clicked()
+                        {
+                            calibrate_clicked = true;
+                        }
+                        ui.add_space(8.0);
                         let mut to_taskbar = app.minimize_to_taskbar();
                         if ui
                             .checkbox(
@@ -222,6 +234,9 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     if github_clicked {
         let _ = webbrowser::open(GITHUB_URL);
     }
+    if calibrate_clicked {
+        app.start_calibration();
+    }
     if bug_clicked {
         let _ = webbrowser::open(ISSUES_URL);
     }
@@ -237,6 +252,7 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
 
 const BUG_GLYPH: &str = "\u{26A0}"; // ⚠
 const FOLDER_GLYPH: &str = "\u{1F4C1}"; // 📁 — best-effort, font may fall back
+const CALIBRATE_GLYPH: &str = "\u{2316}"; // ⌖ — best-effort, font may fall back
 
 fn github_link(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
     let height = 36.0;

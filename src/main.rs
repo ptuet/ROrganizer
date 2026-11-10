@@ -8,6 +8,7 @@ mod class_icon;
 mod config;
 mod hooks;
 mod i18n;
+mod initiative;
 #[cfg(windows)]
 mod single_instance;
 mod theme;

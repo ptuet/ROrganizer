@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 use arc_swap::ArcSwap;
 use eframe::egui;
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+use rust_i18n::t;
 
 use crate::config::{self, StoredConfig};
 use crate::hooks::{BindingAction, HookHandle};
@@ -18,6 +19,18 @@ use crate::ui;
 use crate::win::{self, WindowsSnapshot, DEFAULT_TITLE_REGEX};
 
 const SAVE_DEBOUNCE: Duration = Duration::from_millis(500);
+/// How long the status line (initiative sort, calibration) stays visible.
+const STATUS_TTL: Duration = Duration::from_secs(8);
+/// Time given to put the cursor on a portrait during the calibration.
+const CALIBRATION_DELAY: Duration = Duration::from_secs(4);
+
+/// Group panel calibration in progress (experimental initiative sort).
+pub struct Calibration {
+    /// 1 = waiting for the first portrait, 2 = for the second.
+    pub step: u8,
+    pub deadline: Instant,
+    first: Option<(isize, (i32, i32))>,
+}
 
 /// Triggers assigned to 2+ BindingTargets that are actually wired.
 ///
@@ -145,6 +158,14 @@ pub struct App {
     show_about: bool,
     /// Zaap picker modal: `Some(query)` while open, with the search text.
     zaap_query: Option<String>,
+    /// Group panel calibration for the initiative sort (experimental).
+    group_panel: Option<crate::initiative::GroupPanel>,
+    /// Calibration in progress: step 1 or 2, when the cursor is read, and
+    /// the first portrait once picked (window, offset).
+    calibration: Option<Calibration>,
+    /// Short message under the account count (initiative sort, calibration),
+    /// with the time it was set; hidden after `STATUS_TTL`.
+    status: Option<(String, Instant)>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -181,6 +202,7 @@ impl App {
         let stored = config_path.as_ref().and_then(|p| config::load(p));
         // On by default, also when no config exists yet.
         let shortcuts_only_in_dofus = stored.as_ref().is_none_or(|c| c.shortcuts_only_in_dofus);
+        let group_panel = stored.as_ref().and_then(|c| c.group_panel.clone());
 
         let (theme, lang, bindings, cycle_order, title_regex, minimize_to_taskbar) = match stored {
             Some(cfg) => (
@@ -254,6 +276,9 @@ impl App {
             shortcuts_only_in_dofus,
             show_about: false,
             zaap_query: None,
+            group_panel,
+            calibration: None,
+            status: None,
             about_icon,
             class_icons,
         }
@@ -443,6 +468,148 @@ impl App {
         win::chat::send_plan(plan, first, move || ctx.request_repaint());
     }
 
+    // --- Initiative sort (experimental) -----------------------------------
+
+    fn set_status(&mut self, msg: String) {
+        self.status = Some((msg, Instant::now()));
+    }
+
+    /// Status line under the account count, while still fresh.
+    pub fn status_text(&self) -> Option<&str> {
+        self.status
+            .as_ref()
+            .filter(|(_, at)| at.elapsed() < STATUS_TTL)
+            .map(|(m, _)| m.as_str())
+    }
+
+    pub fn calibration(&self) -> Option<&Calibration> {
+        self.calibration.as_ref()
+    }
+
+    pub fn start_calibration(&mut self) {
+        self.show_about = false;
+        self.calibration = Some(Calibration {
+            step: 1,
+            deadline: Instant::now() + CALIBRATION_DELAY,
+            first: None,
+        });
+    }
+
+    pub fn cancel_calibration(&mut self) {
+        self.calibration = None;
+    }
+
+    /// Reads the cursor when the countdown of the current step is over.
+    fn tick_calibration(&mut self, ctx: &egui::Context) {
+        let Some(cal) = &self.calibration else { return };
+        if Instant::now() < cal.deadline {
+            ctx.request_repaint_after(Duration::from_millis(100));
+            return;
+        }
+        let (step, first) = (cal.step, cal.first);
+        let live = self.live_accounts();
+        let picked = win::group_panel::cursor_in_window()
+            .filter(|(hwnd, _)| live.iter().any(|(_, h)| h == hwnd));
+        let Some((hwnd, offset)) = picked else {
+            self.calibration = None;
+            self.set_status(t!("initiative.calib_not_dofus").to_string());
+            return;
+        };
+        match (step, first) {
+            (1, _) => {
+                self.calibration = Some(Calibration {
+                    step: 2,
+                    deadline: Instant::now() + CALIBRATION_DELAY,
+                    first: Some((hwnd, offset)),
+                });
+            }
+            (_, Some((first_hwnd, first_offset))) => {
+                self.calibration = None;
+                let calib = crate::initiative::calibrate(first_offset, offset)
+                    .filter(|_| first_hwnd == hwnd);
+                let slot = live.iter().find(|(_, h)| *h == hwnd).map(|(s, _)| s.clone());
+                match (calib, slot) {
+                    (Some(calib), Some(slot)) => {
+                        self.set_status(
+                            t!("initiative.calib_done", name = slot.as_str()).to_string(),
+                        );
+                        self.group_panel = Some(crate::initiative::GroupPanel { slot, calib });
+                        self.mark_dirty();
+                    }
+                    _ => self.set_status(t!("initiative.calib_same").to_string()),
+                }
+            }
+            _ => self.calibration = None,
+        }
+    }
+
+    /// Hovers the calibrated group panel and sorts the accounts by the
+    /// initiative read in the tooltips. Starts the calibration first when
+    /// there is none.
+    pub fn sort_by_initiative(&mut self, ctx: &egui::Context) {
+        if win::group_panel::is_busy() {
+            return;
+        }
+        let Some(panel) = self.group_panel.clone() else {
+            self.start_calibration();
+            return;
+        };
+        let Some(hwnd) = self
+            .live_accounts()
+            .into_iter()
+            .find(|(s, _)| *s == panel.slot)
+            .map(|(_, h)| h)
+        else {
+            self.set_status(t!("initiative.window_missing", name = panel.slot.as_str()).to_string());
+            return;
+        };
+        // Our always-on-top window could cover the panel or its tooltips.
+        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+        let ctx = ctx.clone();
+        win::group_panel::read_group(hwnd, panel.calib, move || {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+            ctx.request_repaint();
+        });
+    }
+
+    /// Applies the result of a finished initiative read, if any.
+    fn apply_initiative_outcome(&mut self) {
+        use win::group_panel::Outcome;
+        let Some(outcome) = win::group_panel::take_outcome() else { return };
+        let members = match outcome {
+            Outcome::Read(members) => members,
+            Outcome::PanelNotFound => {
+                return self.set_status(t!("initiative.panel_not_found").to_string());
+            }
+            Outcome::WindowUnavailable => {
+                return self.set_status(t!("initiative.window_unavailable").to_string());
+            }
+        };
+        let live = self.live_accounts();
+        let names: Vec<&str> = live.iter().map(|(s, _)| s.as_str()).collect();
+        let mut found: Vec<(String, u32)> = Vec::new();
+        for m in &members {
+            if let Some(slot) = crate::initiative::match_account(&m.name, &names)
+                && !found.iter().any(|(s, _)| s == slot)
+            {
+                found.push((slot.to_string(), m.initiative));
+            }
+        }
+        if found.is_empty() {
+            return self.set_status(t!("initiative.no_match").to_string());
+        }
+        let new_order = crate::initiative::sort_order(&self.cycle_order, &found);
+        self.apply_drag_drop(new_order);
+        let mut ranked = found.clone();
+        ranked.sort_by(|a, b| b.1.cmp(&a.1));
+        let list = ranked
+            .iter()
+            .map(|(s, i)| format!("{s} {i}"))
+            .collect::<Vec<_>>()
+            .join(" · ");
+        self.set_status(t!("initiative.sorted", list = list.as_str()).to_string());
+    }
+
     /// Launched accounts with their HWND, in the order shown in the app.
     fn live_accounts(&self) -> Vec<(SlotKey, isize)> {
         let snap = self.windows.load();
@@ -615,6 +782,7 @@ impl App {
             title_regex: self.title_regex.clone(),
             minimize_to_taskbar: self.minimize_to_taskbar,
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
+            group_panel: self.group_panel.clone(),
         };
         let _ = config::save_atomic(path, &cfg);
     }
@@ -711,9 +879,13 @@ impl App {
             0.0
         };
         let toggle_h = TOGGLE_BUTTON + if self.is_active { 0.0 } else { TOGGLE_HINT };
+        // Status line under the summary (initiative sort): wraps on 2 lines.
+        const STATUS: f32 = 36.0;
+        let status_h = if self.status_text().is_some() { STATUS } else { 0.0 };
         let desired_content = TITLE_BAR
             + PANEL_PAD
             + SUMMARY
+            + status_h
             + SUMMARY_GAP
             + n_for_height * ROW
             + banner_h
@@ -726,7 +898,7 @@ impl App {
         // the bottom — a clipped close button would look like a broken modal.
         const ABOUT_MIN: f32 = ui::about::ABOUT_CARD_HEIGHT;
         let mut desired = desired_content;
-        if self.show_about || self.zaap_query.is_some() {
+        if self.show_about || self.zaap_query.is_some() || self.calibration.is_some() {
             desired = desired.max(ABOUT_MIN);
         }
         let desired = desired.clamp(280.0, 600.0);
@@ -773,6 +945,12 @@ impl eframe::App for App {
         }
 
         self.ensure_cycle_order_covers_snapshot();
+        self.tick_calibration(ctx);
+        self.apply_initiative_outcome();
+        if self.status_text().is_some() {
+            // Wake up again to hide the status line once it expires.
+            ctx.request_repaint_after(Duration::from_secs(1));
+        }
         self.sync_state_to_hooks(false);
         self.update_tray_status(false);
         self.apply_dynamic_height(ctx);
@@ -782,6 +960,7 @@ impl eframe::App for App {
         ui::capture::draw(ctx, self);
         ui::about::draw(ctx, self);
         ui::zaap::draw(ctx, self);
+        ui::calibration::draw(ctx, self);
 
         self.flush_if_due();
     }

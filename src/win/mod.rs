@@ -1,6 +1,7 @@
 pub mod chat;
 pub mod enumerate;
 pub mod focus;
+pub mod group_panel;
 pub mod keyboard_layout;
 pub mod process;
 pub mod taskbar;

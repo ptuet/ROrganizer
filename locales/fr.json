@@ -19,7 +19,8 @@
     "tooltip_sort_taskbar": "Trier la barre des tâches dans cet ordre",
     "tooltip_invite_group": "Inviter tous les comptes dans le groupe du premier",
     "tooltip_about": "À propos",
-    "tooltip_zaap_group": "Envoyer tous les comptes au même zaap"
+    "tooltip_zaap_group": "Envoyer tous les comptes au même zaap",
+    "tooltip_sort_initiative": "Trier les comptes par initiative (panneau de groupe)"
   },
   "about": {
     "credit": "Développé par Loulouw avec l'aide de Claude",
@@ -30,7 +31,8 @@
     "esc_hint": "Échap pour fermer",
     "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)",
     "fork": "Fork maintenu par ptuet",
-    "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan"
+    "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan",
+    "calibrate_panel": "Calibrer le panneau de groupe"
   },
   "tray": {
     "show": "Afficher",
@@ -58,5 +60,19 @@
     "search_hint": "Rechercher un zaap…",
     "no_result": "Aucun zaap trouvé",
     "hint": "Clic ou Entrée : tous les comptes y vont · Échap pour fermer"
+  },
+  "initiative": {
+    "calib_title": "Calibrage du panneau de groupe",
+    "calib_step1": "Place la souris sur le 1er portrait du groupe, dans Dofus",
+    "calib_step2": "Place la souris sur le 2e portrait du groupe",
+    "calib_hint": "La position est relevée à la fin du décompte · Échap pour annuler",
+    "calib_done": "Panneau de groupe calibré sur la fenêtre de %{name}",
+    "calib_not_dofus": "Calibrage annulé : la souris n'était pas sur une fenêtre de compte Dofus",
+    "calib_same": "Calibrage annulé : le 2e portrait doit être sur la même fenêtre, à un autre endroit",
+    "sorted": "Trié par initiative : %{list}",
+    "panel_not_found": "Panneau de groupe introuvable : vérifie que tu es en groupe, ou recalibre-le dans les réglages",
+    "window_missing": "Lance %{name} : c'est sa fenêtre qui a servi au calibrage",
+    "window_unavailable": "Impossible de passer sur la fenêtre calibrée",
+    "no_match": "Aucun pseudo du groupe ne correspond à un compte lancé"
   }
 }

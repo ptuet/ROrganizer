@@ -39,7 +39,19 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                 Some(SummaryAction::SortTaskbar) => app.sort_taskbar(ctx),
                 Some(SummaryAction::InviteGroup) => app.invite_group(ctx),
                 Some(SummaryAction::OpenZaap) => app.open_zaap(),
+                Some(SummaryAction::SortInitiative) => app.sort_by_initiative(ctx),
                 None => {}
+            }
+            if let Some(msg) = app.status_text() {
+                ui.add_space(2.0);
+                ui.add(
+                    egui::Label::new(
+                        egui::RichText::new(msg)
+                            .size(11.0)
+                            .color(theme::text_tertiary(theme)),
+                    )
+                    .wrap(),
+                );
             }
             ui.add_space(10.0);
 
@@ -123,6 +135,7 @@ enum SummaryAction {
     SortTaskbar,
     InviteGroup,
     OpenZaap,
+    SortInitiative,
 }
 
 /// Account count + icon buttons. Returns the button clicked this frame.
@@ -152,6 +165,14 @@ fn draw_summary(ui: &mut egui::Ui, theme: Theme, count: usize) -> Option<Summary
                     && !busy
                 {
                     action = Some(SummaryAction::SortTaskbar);
+                }
+                let busy = win::group_panel::is_busy();
+                if icon_button(ui, theme, busy, paint_initiative_icon)
+                    .on_hover_text(t!("header.tooltip_sort_initiative").to_string())
+                    .clicked()
+                    && !busy
+                {
+                    action = Some(SummaryAction::SortInitiative);
                 }
             }
             let chat_busy = win::chat::is_busy();
@@ -206,6 +227,21 @@ fn paint_sort_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
         let y = rect.center().y - 4.0 + i as f32 * 4.0;
         painter.line_segment([egui::pos2(left, y), egui::pos2(left + len, y)], stroke);
     }
+}
+
+/// "Initiative": a lightning bolt (who plays first).
+fn paint_initiative_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+    let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
+    let bolt = vec![
+        p(15.0, 3.0),
+        p(9.0, 12.0),
+        p(13.5, 12.0),
+        p(11.0, 19.0),
+        p(17.0, 9.5),
+        p(12.5, 9.5),
+        p(15.0, 3.0),
+    ];
+    painter.add(egui::Shape::line(bolt, stroke));
 }
 
 /// "Zaap": a round horseshoe arch on two feet and a base, a teleport vortex

@@ -30,6 +30,9 @@ pub struct StoredConfig {
     /// JSONs → true: the safer behaviour applies to existing users too.
     #[serde(default = "default_true")]
     pub shortcuts_only_in_dofus: bool,
+    /// Group panel calibration for the initiative sort (experimental).
+    #[serde(default)]
+    pub group_panel: Option<crate::initiative::GroupPanel>,
 }
 
 fn default_true() -> bool {
@@ -113,6 +116,7 @@ mod tests {
             title_regex: None,
             minimize_to_taskbar: true,
             shortcuts_only_in_dofus: false,
+            group_panel: None,
         }
     }
 
