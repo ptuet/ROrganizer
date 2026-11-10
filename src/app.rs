@@ -30,29 +30,33 @@ pub(crate) fn compute_conflicts(
     bindings: &HashMap<BindingTarget, Trigger>,
     live_slots: &[&str],
 ) -> HashSet<Trigger> {
-    let mut counts: HashMap<Trigger, u32> = HashMap::new();
+    // Distinct actions per trigger: a cycle action bound twice to the same
+    // trigger (primary + alternate) is redundant, not conflicting.
+    let mut actions: HashMap<Trigger, HashSet<BindingTarget>> = HashMap::new();
     for (target, t) in bindings {
         if let BindingTarget::Account(slot) = target
             && !live_slots.contains(&slot.as_str())
         {
             continue;
         }
-        *counts.entry(*t).or_insert(0) += 1;
+        actions.entry(*t).or_default().insert(target.action_target());
     }
-    counts
+    actions
         .into_iter()
-        .filter(|(_, c)| *c > 1)
+        .filter(|(_, a)| a.len() > 1)
         .map(|(t, _)| t)
         .collect()
 }
 
 /// Total order on BindingTarget for deterministic JSON serialization.
-/// Account names alphabetical first, then CycleNext, then CyclePrev.
+/// Account names alphabetical first, then CycleNext (+ alt), then CyclePrev (+ alt).
 fn binding_target_sort_key(b: &BindingTarget) -> (u8, &str) {
     match b {
         BindingTarget::Account(s) => (0, s.as_str()),
         BindingTarget::CycleNext => (1, ""),
-        BindingTarget::CyclePrev => (2, ""),
+        BindingTarget::CycleNextAlt => (2, ""),
+        BindingTarget::CyclePrev => (3, ""),
+        BindingTarget::CyclePrevAlt => (4, ""),
     }
 }
 
@@ -543,11 +547,15 @@ impl App {
             }
         }
         // 2. Cycle bindings come after — Account always wins on conflict.
-        if let Some(trig) = self.bindings.get(&BindingTarget::CycleNext) {
-            bindings.push((*trig, BindingAction::CycleNext));
-        }
-        if let Some(trig) = self.bindings.get(&BindingTarget::CyclePrev) {
-            bindings.push((*trig, BindingAction::CyclePrev));
+        for (target, action) in [
+            (BindingTarget::CycleNext, BindingAction::CycleNext),
+            (BindingTarget::CycleNextAlt, BindingAction::CycleNext),
+            (BindingTarget::CyclePrev, BindingAction::CyclePrev),
+            (BindingTarget::CyclePrevAlt, BindingAction::CyclePrev),
+        ] {
+            if let Some(trig) = self.bindings.get(&target) {
+                bindings.push((*trig, action));
+            }
         }
 
         self.hooks.set_bindings_and_cycle(bindings, cycle_hwnds);
@@ -824,8 +832,10 @@ mod tests {
         // Persistence relies on this ordering: byte-stable JSON requires
         // accounts to come first, then CycleNext, then CyclePrev.
         let mut targets = vec![
+            BindingTarget::CyclePrevAlt,
             BindingTarget::CyclePrev,
             BindingTarget::Account("B".into()),
+            BindingTarget::CycleNextAlt,
             BindingTarget::CycleNext,
             BindingTarget::Account("A".into()),
         ];
@@ -836,9 +846,35 @@ mod tests {
                 BindingTarget::Account("A".into()),
                 BindingTarget::Account("B".into()),
                 BindingTarget::CycleNext,
+                BindingTarget::CycleNextAlt,
                 BindingTarget::CyclePrev,
+                BindingTarget::CyclePrevAlt,
             ]
         );
+    }
+
+    #[test]
+    fn same_trigger_on_primary_and_alt_cycle_is_not_a_conflict() {
+        let mut bindings = HashMap::new();
+        bindings.insert(BindingTarget::CycleNext, Trigger::Key(0x70));
+        bindings.insert(BindingTarget::CycleNextAlt, Trigger::Key(0x70));
+        assert!(compute_conflicts(&bindings, &[]).is_empty());
+    }
+
+    #[test]
+    fn alt_cycle_conflicts_with_the_other_direction() {
+        let mut bindings = HashMap::new();
+        bindings.insert(BindingTarget::CycleNextAlt, Trigger::Key(0x70));
+        bindings.insert(BindingTarget::CyclePrev, Trigger::Key(0x70));
+        assert_eq!(compute_conflicts(&bindings, &[]).len(), 1);
+    }
+
+    #[test]
+    fn alt_cycle_conflicts_with_a_live_account() {
+        let mut bindings = HashMap::new();
+        bindings.insert(BindingTarget::Account("A".into()), Trigger::Key(0x70));
+        bindings.insert(BindingTarget::CycleNextAlt, Trigger::Key(0x70));
+        assert_eq!(compute_conflicts(&bindings, &["A"]).len(), 1);
     }
 
     #[test]

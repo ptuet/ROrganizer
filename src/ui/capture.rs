@@ -47,6 +47,8 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
         }
         BindingTarget::CycleNext => t!("cycle.next").to_string(),
         BindingTarget::CyclePrev => t!("cycle.prev").to_string(),
+        BindingTarget::CycleNextAlt => format!("{} (2)", t!("cycle.next")),
+        BindingTarget::CyclePrevAlt => format!("{} (2)", t!("cycle.prev")),
     };
 
     egui::Area::new(egui::Id::new("capture_overlay"))

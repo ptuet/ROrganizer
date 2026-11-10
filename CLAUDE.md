@@ -539,6 +539,16 @@ de `App::ui`, avant `apply_dynamic_height` et `main_view::draw` — les deux
 lecteurs — donc bannière et hauteur de fenêtre restent cohérentes dans la
 même frame.
 
+### Second raccourci de cycle (`CycleNextAlt` / `CyclePrevAlt`)
+
+Variantes ajoutées **en fin d'enum** : les configs existantes se relisent
+sans migration. Elles poussent la même `BindingAction` que leur primaire.
+`compute_conflicts` compte les **actions distinctes** par trigger
+(`BindingTarget::action_target`), donc primaire et alternatif sur la même
+touche ne forment pas un conflit. ⚠ Une config contenant une variante Alt
+n'est plus lisible par une version antérieure : serde échoue et
+`config::load` retombe sur les valeurs par défaut.
+
 ### `title_regex` invalide en config = pas de crash
 
 Le watcher panique si la regex utilisateur ne compile pas. La config

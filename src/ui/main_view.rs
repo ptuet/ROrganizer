@@ -326,27 +326,34 @@ fn draw_cycle_section(ui: &mut egui::Ui, theme: Theme, app: &mut App, conflicts:
     );
     ui.add_space(6.0);
 
-    let next_binding = app.binding_for(&BindingTarget::CycleNext);
-    let next_conflict = next_binding.map(|t| conflicts.contains(&t)).unwrap_or(false);
-    if draw_cycle_row(ui, theme, &t!("cycle.next"), next_binding, next_conflict) {
-        app.bind_target(BindingTarget::CycleNext);
-    }
-    ui.add_space(6.0);
-    let prev_binding = app.binding_for(&BindingTarget::CyclePrev);
-    let prev_conflict = prev_binding.map(|t| conflicts.contains(&t)).unwrap_or(false);
-    if draw_cycle_row(ui, theme, &t!("cycle.prev"), prev_binding, prev_conflict) {
-        app.bind_target(BindingTarget::CyclePrev);
+    let rows = [
+        (t!("cycle.next"), BindingTarget::CycleNext, BindingTarget::CycleNextAlt),
+        (t!("cycle.prev"), BindingTarget::CyclePrev, BindingTarget::CyclePrevAlt),
+    ];
+    for (i, (label, primary, alt)) in rows.into_iter().enumerate() {
+        if i > 0 {
+            ui.add_space(6.0);
+        }
+        let bindings = [app.binding_for(&primary), app.binding_for(&alt)];
+        let conflict = bindings.map(|b| b.is_some_and(|t| conflicts.contains(&t)));
+        match draw_cycle_row(ui, theme, &label, bindings, conflict) {
+            Some(0) => app.bind_target(primary),
+            Some(_) => app.bind_target(alt),
+            None => {}
+        }
     }
 }
 
-/// Returns true if the user clicked the pill — caller opens the capture modal.
+/// Returns the index of the clicked pill (0 = primary, 1 = alternate) —
+/// caller opens the capture modal for that target.
 fn draw_cycle_row(
     ui: &mut egui::Ui,
     theme: Theme,
     label: &str,
-    binding: Option<Trigger>,
-    in_conflict: bool,
-) -> bool {
+    bindings: [Option<Trigger>; 2],
+    pill_conflicts: [bool; 2],
+) -> Option<usize> {
+    let in_conflict = pill_conflicts.contains(&true);
     let (bg_normal, bg_hover, border) = if in_conflict {
         let (bg, b, _, _) = theme::conflict_palette(theme);
         (bg, mix(bg, Color32::WHITE, 0.06), b)
@@ -361,7 +368,7 @@ fn draw_cycle_row(
         .unwrap_or(false);
     let bg = if prior_hovered { bg_hover } else { bg_normal };
     let avail_width = ui.available_width();
-    let mut pill_rect: Option<egui::Rect> = None;
+    let mut pill_rects: [Option<egui::Rect>; 2] = [None, None];
 
     let frame_resp = Frame::new()
         .fill(bg)
@@ -380,8 +387,17 @@ fn draw_cycle_row(
                 ui.with_layout(
                     egui::Layout::right_to_left(egui::Align::Center),
                     |ui| {
-                        let r = binding_pill(ui, theme, binding, in_conflict);
-                        pill_rect = Some(r.rect);
+                        // Right-to-left: the alternate pill sits rightmost.
+                        let alt = binding_pill_with(
+                            ui,
+                            theme,
+                            bindings[1],
+                            pill_conflicts[1],
+                            "+",
+                        );
+                        pill_rects[1] = Some(alt.rect);
+                        let main = binding_pill(ui, theme, bindings[0], pill_conflicts[0]);
+                        pill_rects[0] = Some(main.rect);
                     },
                 );
             });
@@ -389,13 +405,12 @@ fn draw_cycle_row(
 
     let row_resp = ui.interact(frame_resp.response.rect, id, Sense::click());
     if !row_resp.clicked() {
-        return false;
+        return None;
     }
-    row_resp
-        .interact_pointer_pos()
-        .zip(pill_rect)
-        .map(|(p, r)| r.contains(p))
-        .unwrap_or(false)
+    let p = row_resp.interact_pointer_pos()?;
+    pill_rects
+        .iter()
+        .position(|r| r.is_some_and(|r| r.contains(p)))
 }
 
 fn draw_drag_handle(ui: &mut egui::Ui, theme: Theme) {
@@ -439,9 +454,20 @@ fn binding_pill(
     binding: Option<Trigger>,
     in_conflict: bool,
 ) -> egui::Response {
+    binding_pill_with(ui, theme, binding, in_conflict, &t!("binding.set"))
+}
+
+/// Same as `binding_pill`, with a custom label shown while unbound.
+fn binding_pill_with(
+    ui: &mut egui::Ui,
+    theme: Theme,
+    binding: Option<Trigger>,
+    in_conflict: bool,
+    empty_label: &str,
+) -> egui::Response {
     let label = match binding {
         Some(t) => t.display_label(),
-        None => t!("binding.set").to_string(),
+        None => empty_label.to_string(),
     };
     let has_binding = binding.is_some();
 
