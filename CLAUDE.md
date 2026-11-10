@@ -439,12 +439,19 @@ Workarounds essayés et abandonnés :
   capturables.
 - `egui::Key::NumX` confond numpad et rangée du haut (les deux mappent VK
   0x36-0x39).
-- Pour les touches OEM (², ù, etc.) sur layouts non-US, egui retourne un
-  `Key` basé sur la position physique (Backtick pour ²~) qui mappe à un
-  VK US (0xC0). Au runtime le LL hook reçoit le vrai VK FR (0xDE) →
-  mismatch.
+- Touche ISO 102 (`<>` en AZERTY) : pas de `egui::Key` dédié, non gérée.
 
 Ces limitations sont assumées plutôt qu'un workaround visible côté UI.
+
+**Touches OEM (², ù, ), =, ^, $…) sur layouts non-US — corrigé.** egui
+nomme les touches d'après leur position QWERTY US : `²` arrivait en
+`Backtick` → VK 0xC0, alors que le LL hook reçoit le VK FR 0xDE (et 0xC0
+est `ù` en AZERTY : le raccourci « ² » se déclenchait sur `ù`).
+`triggers::event_to_vk` résout désormais les positions OEM via
+`physical_key` → scan code set-1 → `MapVirtualKeyW(MAPVK_VSC_TO_VK)` sur
+le layout actif (`win::keyboard_layout`), et `display_label` affiche le
+caractère réel via `MAPVK_VK_TO_CHAR`. Les bindings OEM enregistrés avant
+le correctif gardent l'ancien VK : il faut les ré-attribuer.
 
 ### eframe `ctx.used_rect()` ne capture pas les widgets qui débordent
 
