@@ -16,6 +16,7 @@
     "tooltip_lang": "Langue",
     "tooltip_refresh": "Rafraîchir",
     "tooltip_sort_taskbar": "Trier la barre des tâches dans cet ordre",
+    "tooltip_invite_group": "Inviter tous les comptes dans le groupe du premier",
     "tooltip_about": "À propos"
   },
   "about": {

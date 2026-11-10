@@ -1,3 +1,4 @@
+pub mod chat;
 pub mod enumerate;
 pub mod focus;
 pub mod keyboard_layout;

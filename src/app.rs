@@ -345,14 +345,34 @@ impl App {
     /// `cycle_order` (the order shown in the app). Repaints once done so the
     /// greyed-out button comes back.
     pub fn sort_taskbar(&self, ctx: &egui::Context) {
-        let snap = self.windows.load();
-        let hwnds: Vec<isize> = self
-            .cycle_order
-            .iter()
-            .filter_map(|slot| snap.iter().find(|w| &w.slot_key == slot).map(|w| w.hwnd))
-            .collect();
+        let hwnds: Vec<isize> = self.live_accounts().into_iter().map(|(_, h)| h).collect();
         let ctx = ctx.clone();
         win::taskbar::reorder_taskbar(hwnds, move || ctx.request_repaint());
+    }
+
+    /// From the first account of the list, sends `/invite <name>` for every
+    /// other launched account.
+    pub fn invite_group(&self, ctx: &egui::Context) {
+        let accounts = self.live_accounts();
+        let Some(((_, leader), others)) = accounts.split_first() else {
+            return;
+        };
+        let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
+        let ctx = ctx.clone();
+        win::chat::send_commands(*leader, commands, move || ctx.request_repaint());
+    }
+
+    /// Launched accounts with their HWND, in the order shown in the app.
+    fn live_accounts(&self) -> Vec<(SlotKey, isize)> {
+        let snap = self.windows.load();
+        self.cycle_order
+            .iter()
+            .filter_map(|slot| {
+                snap.iter()
+                    .find(|w| &w.slot_key == slot)
+                    .map(|w| (slot.clone(), w.hwnd))
+            })
+            .collect()
     }
 
     pub fn request_minimize(&self, ctx: &egui::Context) {

@@ -6,7 +6,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 use super::keyboard::resolve_action;
-use super::state::{HOOK_ENABLED, HOOK_STATE};
+use super::state::{HOOK_ENABLED, HOOK_PAUSED, HOOK_STATE};
 use crate::triggers::{MouseBtn, Trigger, WheelDir};
 
 pub unsafe extern "system" fn mouse_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT { unsafe {
@@ -14,7 +14,7 @@ pub unsafe extern "system" fn mouse_proc(code: i32, wparam: WPARAM, lparam: LPAR
         return CallNextHookEx(None, code, wparam, lparam);
     }
 
-    if !HOOK_ENABLED.load(Ordering::Relaxed) {
+    if !HOOK_ENABLED.load(Ordering::Relaxed) || HOOK_PAUSED.load(Ordering::Relaxed) {
         return CallNextHookEx(None, code, wparam, lparam);
     }
 

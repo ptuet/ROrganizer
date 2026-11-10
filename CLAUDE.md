@@ -574,6 +574,26 @@ couleur ≥ 40 px (les icônes de titre des miniatures contiennent du jaune).
 UI Automation ne voit **pas** les miniatures de groupe : elles sont rendues
 par DWM, `FromPoint` traverse le popup.
 
+### Invitation de groupe : seule fonction qui envoie des touches au jeu
+
+`win::chat` met le premier compte de la liste au premier plan et y envoie
+`/invite <pseudo>` pour chaque autre compte lancé. Contrairement au reste de
+l'app (qui ne fait que changer de fenêtre), c'est de l'injection d'entrées
+dans Dofus — à garder en tête vis-à-vis des CGU d'Ankama.
+
+Séquence reprise de Zaapy (validée sur Dofus 3), par commande :
+Entrée → Ctrl+V → Entrée → Échap.
+- **Coller, pas taper** : la commande passe par le presse-papiers, dont le
+  texte est restauré à la fin.
+- **Scan code obligatoire** (`MAPVK_VK_TO_VSC`) : Dofus lit la touche physique,
+  un VK seul est ignoré.
+- **Touche maintenue 25 ms, appui et relâche en deux `SendInput`** : le client
+  lit le clavier une fois par frame.
+- **Échap après envoi** : le chat garde le clavier après une commande.
+- Raccourcis en pause pendant l'envoi (`hooks::set_paused`, distinct de
+  `HOOK_ENABLED` qui appartient à l'utilisateur), un seul envoi à la fois,
+  arrêt si l'utilisateur change de fenêtre en cours de route.
+
 ### `title_regex` invalide en config = pas de crash
 
 Le watcher panique si la regex utilisateur ne compile pas. La config
