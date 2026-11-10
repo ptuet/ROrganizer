@@ -11,6 +11,22 @@ pub enum BindingTarget {
     Account(SlotKey),
     CycleNext,
     CyclePrev,
+    /// Second trigger for the same cycle action. Appended last so configs
+    /// written before it still deserialize unchanged.
+    CycleNextAlt,
+    CyclePrevAlt,
+}
+
+impl BindingTarget {
+    /// The action this target fires. Alternate cycle targets fold onto
+    /// their primary, so binding both to the same trigger is no conflict.
+    pub fn action_target(&self) -> BindingTarget {
+        match self {
+            BindingTarget::CycleNextAlt => BindingTarget::CycleNext,
+            BindingTarget::CyclePrevAlt => BindingTarget::CyclePrev,
+            other => other.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
