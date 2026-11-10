@@ -29,7 +29,8 @@
     "close": "Close",
     "esc_hint": "Esc to close",
     "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)",
-    "fork": "Fork maintained by ptuet"
+    "fork": "Fork maintained by ptuet",
+    "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front"
   },
   "tray": {
     "show": "Show",

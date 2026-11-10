@@ -26,6 +26,14 @@ pub struct StoredConfig {
     /// in the system tray. Missing in older JSONs → false (tray, as before).
     #[serde(default)]
     pub minimize_to_taskbar: bool,
+    /// Shortcuts only fire while a Dofus window is in front. Missing in older
+    /// JSONs → true: the safer behaviour applies to existing users too.
+    #[serde(default = "default_true")]
+    pub shortcuts_only_in_dofus: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// `%APPDATA%\rorganizer\config.json` on Windows. Returns None on platforms
@@ -104,7 +112,18 @@ mod tests {
             theme: Theme::Dark,
             title_regex: None,
             minimize_to_taskbar: true,
+            shortcuts_only_in_dofus: false,
         }
+    }
+
+    #[test]
+    fn config_without_dofus_only_field_defaults_to_on() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        json.as_object_mut().unwrap().remove("shortcuts_only_in_dofus");
+        std::fs::write(&path, json.to_string()).unwrap();
+        assert!(load(&path).expect("old config loads").shortcuts_only_in_dofus);
     }
 
     #[test]
@@ -131,6 +150,7 @@ mod tests {
         assert_eq!(loaded.lang, cfg.lang);
         assert_eq!(loaded.theme, cfg.theme);
         assert_eq!(loaded.minimize_to_taskbar, cfg.minimize_to_taskbar);
+        assert_eq!(loaded.shortcuts_only_in_dofus, cfg.shortcuts_only_in_dofus);
     }
 
     #[test]

@@ -22,7 +22,7 @@ const ISSUES_URL: &str = "https://github.com/ptuet/ROrganizer/issues";
 const LICENSE_LABEL: &str = "MIT OR Apache-2.0";
 /// Card height; `App::apply_dynamic_height` keeps the viewport at least this
 /// tall while the modal is open, so the close button is never clipped.
-pub const ABOUT_CARD_HEIGHT: f32 = 450.0;
+pub const ABOUT_CARD_HEIGHT: f32 = 476.0;
 
 pub fn draw(ctx: &egui::Context, app: &mut App) {
     if !app.is_about_open() {
@@ -180,6 +180,19 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                             .changed()
                         {
                             app.set_minimize_to_taskbar(to_taskbar);
+                        }
+                        ui.add_space(4.0);
+                        let mut dofus_only = app.shortcuts_only_in_dofus();
+                        if ui
+                            .checkbox(
+                                &mut dofus_only,
+                                egui::RichText::new(t!("about.shortcuts_only_in_dofus"))
+                                    .size(12.0)
+                                    .color(theme::text_secondary(theme)),
+                            )
+                            .changed()
+                        {
+                            app.set_shortcuts_only_in_dofus(dofus_only);
                         }
 
                         ui.add_space(12.0);
