@@ -3,11 +3,25 @@ name: release
 on:
   push:
     tags: ["v*"]
+  # Manual run for an already pushed tag (Actions tab → release → Run
+  # workflow, or `gh workflow run release.yml -f tag=v1.4.0`). Needed when a
+  # tag push fired no event — seen on this fork after a GitHub outage. The
+  # workflow file from the default branch is used, but the code built is the
+  # tag's: one dispatch on main serves the vanilla tags too.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag déjà poussé à publier (ex. v1.4.0 ou v1.4.0-vanilla)"
+        required: true
 
 permissions:
   contents: write
   id-token: write
   attestations: write
+
+env:
+  # The tag being released, whichever way the run was started.
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
 jobs:
   release:
@@ -15,12 +29,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ env.TAG }}
 
       - name: Resolve version
         id: version
         shell: pwsh
         run: |
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:TAG
           $version = $tag -replace '^v', ''
           $match = Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | Select-Object -First 1
           if (-not $match) { throw "No package version found in Cargo.toml" }
@@ -96,7 +112,7 @@ jobs:
           REPO: ${{ github.repository }}
           ASSET: ${{ steps.version.outputs.asset }}
         run: |
-          $tag = $env:GITHUB_REF_NAME
+          $tag = $env:TAG
           $sha = (Get-FileHash $env:ASSET -Algorithm SHA256).Hash.ToLower()
 
           # The annotated tag message is the authored release body: written and
