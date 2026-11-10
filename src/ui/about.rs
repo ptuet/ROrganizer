@@ -14,12 +14,11 @@ use rust_i18n::t;
 use crate::app::App;
 use crate::theme::{self, Theme};
 
-const GITHUB_URL: &str = "https://github.com/Loulouw/ROrganizer";
-const ISSUES_URL: &str = "https://github.com/Loulouw/ROrganizer/issues";
-const WEBSITE_URL: &str = "https://rorganizer.loulouw-labs.fr";
-/// Affiché sans le schéma : c'est un domaine, il se lit dans les trois
-/// langues sans traduction, donc pas de clé i18n.
-const WEBSITE_LABEL: &str = "rorganizer.loulouw-labs.fr";
+/// The fork's repository: GitHub link and bug reports go there. The original
+/// author stays credited (`about.credit`) and is linked from the README.
+const REPO_LABEL: &str = "ptuet/ROrganizer";
+const GITHUB_URL: &str = "https://github.com/ptuet/ROrganizer";
+const ISSUES_URL: &str = "https://github.com/ptuet/ROrganizer/issues";
 const LICENSE_LABEL: &str = "MIT OR Apache-2.0";
 /// Card height; `App::apply_dynamic_height` keeps the viewport at least this
 /// tall while the modal is open, so the close button is never clipped.
@@ -59,7 +58,6 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     let mut config_dir_clicked = false;
     let mut github_clicked = false;
     let mut bug_clicked = false;
-    let mut website_clicked = false;
 
     egui::Area::new(egui::Id::new("about_overlay"))
         .order(egui::Order::Foreground)
@@ -118,30 +116,18 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                                 .size(11.0)
                                 .color(theme::text_tertiary(theme)),
                             );
-                            // Une ligne de texte plutôt qu'une 4e ligne
-                            // d'action : la carte fait déjà 420 px pour une
-                            // fenêtre dont le minimum est 280, donc chaque
-                            // pixel ajouté aggrave le rognage quand aucun
-                            // compte n'est détecté.
+                            // Takes the place of the author's website link
+                            // (one text line, same height): his site hands
+                            // out his own build, without this fork's changes.
                             ui.add_space(6.0);
-                            let site = ui.add(
-                                egui::Label::new(
-                                    egui::RichText::new(WEBSITE_LABEL)
-                                        .size(11.0)
-                                        .color(match theme {
-                                            Theme::Dark => theme::ACTIVE_DARK,
-                                            Theme::Light => theme::ACTIVE_LIGHT,
-                                        }),
-                                )
-                                .sense(Sense::click()),
+                            ui.label(
+                                egui::RichText::new(t!("about.fork"))
+                                    .size(11.0)
+                                    .color(match theme {
+                                        Theme::Dark => theme::ACTIVE_DARK,
+                                        Theme::Light => theme::ACTIVE_LIGHT,
+                                    }),
                             );
-                            if site.hovered() {
-                                ui.ctx()
-                                    .set_cursor_icon(egui::CursorIcon::PointingHand);
-                            }
-                            if site.clicked() {
-                                website_clicked = true;
-                            }
                             ui.add_space(10.0);
                             ui.label(
                                 egui::RichText::new(t!("about.credit"))
@@ -226,9 +212,6 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     if bug_clicked {
         let _ = webbrowser::open(ISSUES_URL);
     }
-    if website_clicked {
-        let _ = webbrowser::open(WEBSITE_URL);
-    }
     if config_dir_clicked
         && let Some(dir) = app.config_dir()
     {
@@ -272,7 +255,7 @@ fn github_link(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
     ui.painter().text(
         label_pos,
         egui::Align2::LEFT_CENTER,
-        "Loulouw/ROrganizer",
+        REPO_LABEL,
         egui::FontId::proportional(13.0),
         theme::text_primary(theme),
     );

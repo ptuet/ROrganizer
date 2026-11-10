@@ -28,7 +28,8 @@
     "open_config_dir": "Open config folder",
     "close": "Close",
     "esc_hint": "Esc to close",
-    "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)"
+    "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)",
+    "fork": "Fork maintained by ptuet"
   },
   "tray": {
     "show": "Show",
