@@ -8,10 +8,9 @@
 
 *Playing up to 8 accounts in parallel? Switch between them with **a single keystroke or mouse click**. No interaction with Dofus, no network connection, no bloat.*
 
-[![Site](https://img.shields.io/badge/site-rorganizer.loulouw--labs.fr-97c459?labelColor=1c1c1a)](https://rorganizer.loulouw-labs.fr)
-[![Version](https://img.shields.io/github/v/release/Loulouw/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/Loulouw/ROrganizer/releases)
+[![Version](https://img.shields.io/github/v/release/ptuet/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/ptuet/ROrganizer/releases)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/Loulouw/ROrganizer/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/ptuet/ROrganizer/releases)
 [![Rust](https://img.shields.io/badge/rust-stable-orange?logo=rust)](https://www.rust-lang.org/)
 [![100% offline](https://img.shields.io/badge/100%25-offline-2ea44f)](#-your-privacy)
 
@@ -21,8 +20,24 @@
 
 ---
 
+> 🍴 **This is a fork** of [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer),
+> the open-source organizer created by **Loulouw**, maintained by
+> [ptuet](https://github.com/ptuet). It fixes a few in-game issues (AZERTY
+> keys such as `²`, a cycle that follows the window you picked with the
+> mouse) and adds multi-account features: a second shortcut for
+> next / previous, taskbar sorting, minimizing to the taskbar, and two
+> buttons that **send chat commands to the game** — invite every account
+> into a group, send every account to the same zaap.
+>
+> Two builds are published on the [Releases page](https://github.com/ptuet/ROrganizer/releases):
+> `ROrganizer-<version>` with those two buttons, and
+> `ROrganizer-<version>-vanilla`, which **never** sends anything to the
+> game. The full, up-to-date description is in the
+> [French README](README.md); the text below is the original author's
+> and does not cover the fork's additions.
+
 > ⚠️ **Beware of impostors.** ROrganizer is downloaded **only** from the
-> [Releases page of this GitHub repo](https://github.com/Loulouw/ROrganizer/releases),
+> [Releases page of this GitHub repo](https://github.com/ptuet/ROrganizer/releases),
 > as **a single executable**. Never inside an archive, never as a script,
 > never from a file host or a link shared elsewhere. Any file carrying my
 > name that does not match this description did not come from me — see
@@ -85,9 +100,9 @@ changes everything.
 
 | 1️⃣ &nbsp; **Download** | 2️⃣ &nbsp; **Run** | 3️⃣ &nbsp; **Configure** |
 |:--|:--|:--|
-| Grab the `.exe` from [Releases](https://github.com/Loulouw/ROrganizer/releases). No installer, no dependencies. | Double-click the `.exe`. That's it. ROrganizer auto-detects any Dofus accounts you've already launched. | Click **"set"** next to an account, then press the key or mouse button you want to bind. |
+| Grab the `.exe` from [Releases](https://github.com/ptuet/ROrganizer/releases). No installer, no dependencies. | Double-click the `.exe`. That's it. ROrganizer auto-detects any Dofus accounts you've already launched. | Click **"set"** next to an account, then press the key or mouse button you want to bind. |
 
-[![Download ROrganizer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download_ROrganizer-97c459?style=for-the-badge&labelColor=1c1c1a)](https://github.com/Loulouw/ROrganizer/releases/latest)
+[![Download ROrganizer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download_ROrganizer-97c459?style=for-the-badge&labelColor=1c1c1a)](https://github.com/ptuet/ROrganizer/releases/latest)
 
 </div>
 
