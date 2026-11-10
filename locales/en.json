@@ -16,6 +16,7 @@
     "tooltip_lang": "Language",
     "tooltip_refresh": "Refresh",
     "tooltip_sort_taskbar": "Sort the taskbar in this order",
+    "tooltip_invite_group": "Invite every account into the first one's group",
     "tooltip_about": "About"
   },
   "about": {

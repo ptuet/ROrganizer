@@ -32,3 +32,7 @@ pub static HOOK_STATE: OnceLock<Mutex<HookState>> = OnceLock::new();
 /// the `HOOK_STATE` mutex when the user has the app inactive.
 pub static HOOK_ENABLED: AtomicBool = AtomicBool::new(false);
 
+/// Set while ROrganizer itself injects keys (chat commands), so they can't
+/// fire a binding. Separate from `HOOK_ENABLED`, which belongs to the user.
+pub static HOOK_PAUSED: AtomicBool = AtomicBool::new(false);
+

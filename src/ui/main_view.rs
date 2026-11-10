@@ -40,6 +40,7 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                 ordered.len(),
                 || app.request_refresh(),
                 || app.sort_taskbar(ctx),
+                || app.invite_group(ctx),
             );
             ui.add_space(10.0);
 
@@ -119,6 +120,7 @@ fn draw_summary(
     count: usize,
     on_refresh: impl FnOnce(),
     on_sort_taskbar: impl FnOnce(),
+    on_invite_group: impl FnOnce(),
 ) {
     ui.horizontal(|ui| {
         let label = match count {
@@ -135,21 +137,37 @@ fn draw_summary(
             if refresh_button(ui, theme).clicked() {
                 on_refresh();
             }
-            // Sorting only means something with 2+ windows.
+            // Sorting and inviting only mean something with 2+ windows.
             if count >= 2 {
                 let busy = win::taskbar::is_sorting();
-                if sort_taskbar_button(ui, theme, busy).clicked() && !busy {
+                if icon_button(ui, theme, busy, paint_sort_icon)
+                    .on_hover_text(t!("header.tooltip_sort_taskbar").to_string())
+                    .clicked()
+                    && !busy
+                {
                     on_sort_taskbar();
+                }
+                let busy = win::chat::is_busy();
+                if icon_button(ui, theme, busy, paint_invite_icon)
+                    .on_hover_text(t!("header.tooltip_invite_group").to_string())
+                    .clicked()
+                    && !busy
+                {
+                    on_invite_group();
                 }
             }
         });
     });
 }
 
-/// "Sort" icon (three left-aligned bars of decreasing length), drawn by hand
-/// so it doesn't depend on a glyph being present in the bundled fonts.
-/// Greyed out and inert while a reorder is running (`busy`).
-fn sort_taskbar_button(ui: &mut egui::Ui, theme: Theme, busy: bool) -> egui::Response {
+/// Small icon button drawn by hand, so it doesn't depend on a glyph being
+/// present in the bundled fonts. Greyed out and inert while `busy`.
+fn icon_button(
+    ui: &mut egui::Ui,
+    theme: Theme,
+    busy: bool,
+    paint: impl FnOnce(&egui::Painter, egui::Rect, Stroke),
+) -> egui::Response {
     let size = Vec2::new(26.0, 22.0);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     if response.hovered() && !busy {
@@ -161,14 +179,34 @@ fn sort_taskbar_button(ui: &mut egui::Ui, theme: Theme, busy: bool) -> egui::Res
     } else {
         theme::text_secondary(theme)
     };
-    let stroke = Stroke::new(1.5, color);
+    paint(ui.painter(), rect, Stroke::new(1.5, color));
+    response
+}
+
+/// "Sort": three left-aligned bars of decreasing length.
+fn paint_sort_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
     let left = rect.center().x - 5.0;
     for (i, len) in [10.0, 7.0, 4.0].into_iter().enumerate() {
         let y = rect.center().y - 4.0 + i as f32 * 4.0;
-        ui.painter()
-            .line_segment([egui::pos2(left, y), egui::pos2(left + len, y)], stroke);
+        painter.line_segment([egui::pos2(left, y), egui::pos2(left + len, y)], stroke);
     }
-    response.on_hover_text(t!("header.tooltip_sort_taskbar").to_string())
+}
+
+/// "Invite": a person (head + shoulders) with a "+" on its right.
+fn paint_invite_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+    let c = rect.center();
+    let person = egui::pos2(c.x - 3.0, c.y);
+    painter.circle_stroke(person + egui::vec2(0.0, -3.5), 2.5, stroke);
+    let shoulders: Vec<egui::Pos2> = (0..=8)
+        .map(|i| {
+            let a = std::f32::consts::PI * (i as f32 / 8.0);
+            person + egui::vec2(-4.5 * a.cos(), 5.0 - 3.5 * a.sin())
+        })
+        .collect();
+    painter.add(egui::Shape::line(shoulders, stroke));
+    let plus = egui::pos2(c.x + 5.0, c.y - 1.0);
+    painter.line_segment([plus - egui::vec2(2.5, 0.0), plus + egui::vec2(2.5, 0.0)], stroke);
+    painter.line_segment([plus - egui::vec2(0.0, 2.5), plus + egui::vec2(0.0, 2.5)], stroke);
 }
 
 fn refresh_button(ui: &mut egui::Ui, theme: Theme) -> egui::Response {

@@ -5,7 +5,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN,
 };
 
-use super::state::{BindingAction, HOOK_ENABLED, HOOK_STATE};
+use super::state::{BindingAction, HOOK_ENABLED, HOOK_PAUSED, HOOK_STATE};
 use crate::triggers::Trigger;
 
 pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT { unsafe {
@@ -14,7 +14,7 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
     }
 
     // Hot-path early-out: lock-free atomic check before touching the mutex.
-    if !HOOK_ENABLED.load(Ordering::Relaxed) {
+    if !HOOK_ENABLED.load(Ordering::Relaxed) || HOOK_PAUSED.load(Ordering::Relaxed) {
         return CallNextHookEx(None, code, wparam, lparam);
     }
 

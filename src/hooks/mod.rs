@@ -61,6 +61,12 @@ impl HookHandle {
     }
 }
 
+/// Suspends (or resumes) every binding while ROrganizer injects keys itself.
+/// Independent from the user's activation switch.
+pub fn set_paused(paused: bool) {
+    state::HOOK_PAUSED.store(paused, Ordering::Relaxed);
+}
+
 /// Returns the new `cycle_index` after `cycle_hwnds` has been replaced.
 ///
 /// Strategy:
