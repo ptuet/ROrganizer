@@ -28,7 +28,7 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
 
     let focus_target = HOOK_STATE.get().and_then(|m| {
         let mut state = m.lock().ok()?;
-        resolve_action(&mut state, Trigger::Key(vk))
+        resolve_action(&mut state, Trigger::Key(vk), crate::win::foreground_window)
     });
 
     if let Some(hwnd) = focus_target {
@@ -41,15 +41,27 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
 
 /// Looks up the trigger against the binding table and returns the HWND to
 /// focus, advancing the cycler cursor as needed. Caller still holds the lock.
+///
+/// `foreground` is only queried for cycle actions: when the window currently
+/// in front is part of the cycle, the cursor snaps to it first. The user may
+/// have switched account with the mouse (taskbar, click) since our last
+/// focus, and Next / Prev must continue from where they actually are.
 pub(super) fn resolve_action(
     state: &mut super::state::HookState,
     trigger: Trigger,
+    foreground: impl FnOnce() -> Option<isize>,
 ) -> Option<isize> {
     let action = state
         .bindings
         .iter()
         .find(|(t, _)| *t == trigger)
         .map(|(_, a)| *a)?;
+    if matches!(action, BindingAction::CycleNext | BindingAction::CyclePrev)
+        && let Some(fg) = foreground()
+        && let Some(pos) = state.cycle_hwnds.iter().position(|&x| x == fg)
+    {
+        state.cycle_index = pos;
+    }
     let target = match action {
         BindingAction::Focus(h) => {
             // A direct focus binding aligns the cycler on its target so the
@@ -102,7 +114,7 @@ mod tests {
     #[test]
     fn empty_bindings_resolves_to_none() {
         let mut st = make_state(Vec::new(), vec![100, 200]);
-        assert!(resolve_action(&mut st, Trigger::Key(0x70)).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
     }
 
     #[test]
@@ -111,7 +123,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::Focus(100))],
             vec![100],
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x71)).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x71), || None).is_none());
     }
 
     #[test]
@@ -121,7 +133,7 @@ mod tests {
             vec![100, 200, 300, 400],
         );
         st.cycle_index = 0; // start away from 300
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(300));
         assert_eq!(st.cycle_index, 2);
         assert_eq!(st.cycle_current_hwnd, Some(300));
@@ -134,7 +146,7 @@ mod tests {
             vec![100, 200],
         );
         st.cycle_index = 1;
-        resolve_action(&mut st, Trigger::Key(0x70));
+        resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(st.cycle_index, 1, "untouched when target outside cycle");
         assert_eq!(st.cycle_current_hwnd, Some(999));
     }
@@ -146,7 +158,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 2;
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(100));
         assert_eq!(st.cycle_index, 0);
         assert_eq!(st.cycle_current_hwnd, Some(100));
@@ -159,7 +171,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(200));
         assert_eq!(st.cycle_index, 1);
     }
@@ -171,7 +183,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 0;
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(300));
         assert_eq!(st.cycle_index, 2);
     }
@@ -183,7 +195,7 @@ mod tests {
             vec![100, 200, 300],
         );
         st.cycle_index = 2;
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(200));
         assert_eq!(st.cycle_index, 1);
     }
@@ -194,7 +206,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::CycleNext)],
             Vec::new(),
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x70)).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
         assert_eq!(st.cycle_current_hwnd, None);
     }
 
@@ -204,7 +216,7 @@ mod tests {
             vec![(Trigger::Key(0x70), BindingAction::CyclePrev)],
             Vec::new(),
         );
-        assert!(resolve_action(&mut st, Trigger::Key(0x70)).is_none());
+        assert!(resolve_action(&mut st, Trigger::Key(0x70), || None).is_none());
     }
 
     #[test]
@@ -217,7 +229,56 @@ mod tests {
             ],
             vec![100, 200],
         );
-        let r = resolve_action(&mut st, Trigger::Key(0x70));
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || None);
         assert_eq!(r, Some(500));
+    }
+
+    #[test]
+    fn cycle_next_continues_from_window_picked_with_the_mouse() {
+        // Cursor on 100 (last hotkey focus), user then clicked 300 in the
+        // taskbar: Next must go to 400, not 200.
+        let mut st = make_state(
+            vec![(Trigger::Key(0x70), BindingAction::CycleNext)],
+            vec![100, 200, 300, 400],
+        );
+        st.cycle_index = 0;
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300));
+        assert_eq!(r, Some(400));
+        assert_eq!(st.cycle_index, 3);
+    }
+
+    #[test]
+    fn cycle_prev_continues_from_window_picked_with_the_mouse() {
+        let mut st = make_state(
+            vec![(Trigger::Key(0x70), BindingAction::CyclePrev)],
+            vec![100, 200, 300, 400],
+        );
+        st.cycle_index = 0;
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(300));
+        assert_eq!(r, Some(200));
+    }
+
+    #[test]
+    fn cycle_keeps_cursor_when_foreground_is_not_in_cycle() {
+        // A browser / Discord in front: behave as before.
+        let mut st = make_state(
+            vec![(Trigger::Key(0x70), BindingAction::CycleNext)],
+            vec![100, 200, 300],
+        );
+        st.cycle_index = 1;
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || Some(999));
+        assert_eq!(r, Some(300));
+    }
+
+    #[test]
+    fn focus_binding_never_queries_foreground() {
+        let mut st = make_state(
+            vec![(Trigger::Key(0x70), BindingAction::Focus(200))],
+            vec![100, 200],
+        );
+        let r = resolve_action(&mut st, Trigger::Key(0x70), || {
+            panic!("foreground queried for a focus binding")
+        });
+        assert_eq!(r, Some(200));
     }
 }
