@@ -28,7 +28,8 @@
     "esc_hint": "Esc to close",
     "minimize_to_taskbar": "Minimize to the taskbar (not the system tray)",
     "fork": "Fork maintained by ptuet",
-    "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front"
+    "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front",
+    "always_on_top": "Always on top"
   },
   "tray": {
     "show": "Show",

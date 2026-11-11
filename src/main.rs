@@ -41,7 +41,9 @@ fn main() -> eframe::Result<()> {
         .with_resizable(false)
         .with_decorations(false)
         .with_transparent(false)
-        .with_window_level(egui::WindowLevel::AlwaysOnTop)
+        // Normal window: Dofus goes in front when clicked. "Always on top" is
+        // an option, applied by App::new once the config is loaded.
+        .with_window_level(egui::WindowLevel::Normal)
         .with_icon(Arc::new(icon_data))
         .with_title("ROrganizer");
 
