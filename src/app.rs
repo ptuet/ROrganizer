@@ -140,6 +140,8 @@ pub struct App {
     /// Shortcuts only fire while a Dofus window is in front (pushed to the
     /// hook state, which makes the decision).
     shortcuts_only_in_dofus: bool,
+    /// Window kept above every other one (option, off by default).
+    always_on_top: bool,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
@@ -181,6 +183,13 @@ impl App {
         let stored = config_path.as_ref().and_then(|p| config::load(p));
         // On by default, also when no config exists yet.
         let shortcuts_only_in_dofus = stored.as_ref().is_none_or(|c| c.shortcuts_only_in_dofus);
+        // Off by default: the window is created normal (main.rs) and only
+        // raised above the others when the user asked for it.
+        let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
+        if always_on_top {
+            cc.egui_ctx
+                .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
+        }
 
         let (theme, lang, bindings, cycle_order, title_regex, minimize_to_taskbar) = match stored {
             Some(cfg) => (
@@ -252,6 +261,7 @@ impl App {
             title_regex,
             minimize_to_taskbar,
             shortcuts_only_in_dofus,
+            always_on_top,
             show_about: false,
             zaap_query: None,
             about_icon,
@@ -332,6 +342,24 @@ impl App {
 
     pub fn minimize_to_taskbar(&self) -> bool {
         self.minimize_to_taskbar
+    }
+
+    pub fn always_on_top(&self) -> bool {
+        self.always_on_top
+    }
+
+    /// Applied right away, no restart needed.
+    pub fn set_always_on_top(&mut self, ctx: &egui::Context, on: bool) {
+        if self.always_on_top != on {
+            self.always_on_top = on;
+            let level = if on {
+                egui::WindowLevel::AlwaysOnTop
+            } else {
+                egui::WindowLevel::Normal
+            };
+            ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(level));
+            self.mark_dirty();
+        }
     }
 
     pub fn shortcuts_only_in_dofus(&self) -> bool {
@@ -615,6 +643,7 @@ impl App {
             title_regex: self.title_regex.clone(),
             minimize_to_taskbar: self.minimize_to_taskbar,
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
+            always_on_top: self.always_on_top,
         };
         let _ = config::save_atomic(path, &cfg);
     }

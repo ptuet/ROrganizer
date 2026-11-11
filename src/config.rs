@@ -30,6 +30,10 @@ pub struct StoredConfig {
     /// JSONs → true: the safer behaviour applies to existing users too.
     #[serde(default = "default_true")]
     pub shortcuts_only_in_dofus: bool,
+    /// Keep the window above every other one, Dofus included. Missing in
+    /// older JSONs → false: a normal window, also for existing users.
+    #[serde(default)]
+    pub always_on_top: bool,
 }
 
 fn default_true() -> bool {
@@ -113,7 +117,18 @@ mod tests {
             title_regex: None,
             minimize_to_taskbar: true,
             shortcuts_only_in_dofus: false,
+            always_on_top: true,
         }
+    }
+
+    #[test]
+    fn config_without_always_on_top_field_is_a_normal_window() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        json.as_object_mut().unwrap().remove("always_on_top");
+        std::fs::write(&path, json.to_string()).unwrap();
+        assert!(!load(&path).expect("old config loads").always_on_top);
     }
 
     #[test]
@@ -151,6 +166,7 @@ mod tests {
         assert_eq!(loaded.theme, cfg.theme);
         assert_eq!(loaded.minimize_to_taskbar, cfg.minimize_to_taskbar);
         assert_eq!(loaded.shortcuts_only_in_dofus, cfg.shortcuts_only_in_dofus);
+        assert_eq!(loaded.always_on_top, cfg.always_on_top);
     }
 
     #[test]
