@@ -1,6 +1,6 @@
 [package]
 name = "rorganizer"
-version = "1.4.1-vanilla"
+version = "1.4.2-vanilla"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["Loulouw"]

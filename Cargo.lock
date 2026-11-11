@@ -2299,7 +2299,7 @@ dependencies = [
 
 [[package]]
 name = "rorganizer"
-version = "1.4.1-vanilla"
+version = "1.4.2-vanilla"
 dependencies = [
  "arc-swap",
  "directories",
