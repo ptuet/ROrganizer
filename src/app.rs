@@ -164,8 +164,6 @@ pub struct App {
     game_keys: crate::game_keys::GameKeys,
     /// Account that invites, walks and is followed; `None` = first of the list.
     group_leader: Option<SlotKey>,
-    /// How fast the chat commands are typed (setting).
-    command_speed: crate::game_keys::CommandSpeed,
     /// Game key being set in the capture modal; the settings reopen after.
     game_key_capture: Option<crate::game_keys::GameKeyTarget>,
     /// Tab shown in the settings modal.
@@ -223,7 +221,6 @@ impl App {
             .clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
         let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
         let group_leader = stored.as_ref().and_then(|c| c.group_leader.clone());
-        let command_speed = stored.as_ref().map(|c| c.command_speed).unwrap_or_default();
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -304,7 +301,6 @@ impl App {
             npc_follow_delay_ms,
             game_keys,
             group_leader,
-            command_speed,
             game_key_capture: None,
             settings_tab: ui::about::SettingsTab::default(),
             show_about: false,
@@ -502,7 +498,7 @@ impl App {
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
         let plan = vec![win::chat::Action::Type(*leader, commands)];
-        win::chat::send_plan(plan, self.game_keys, self.command_speed, None, move || {
+        win::chat::send_plan(plan, self.game_keys, None, move || {
             ctx.request_repaint()
         });
     }
@@ -533,7 +529,7 @@ impl App {
     fn run_plan(&self, ctx: &egui::Context, plan: Vec<win::chat::Action>) {
         let leader = self.group_hwnds().first().copied();
         let ctx = ctx.clone();
-        win::chat::send_plan(plan, self.game_keys, self.command_speed, leader, move || {
+        win::chat::send_plan(plan, self.game_keys, leader, move || {
             ctx.request_repaint()
         });
     }
@@ -563,17 +559,6 @@ impl App {
     /// Names of the launched accounts, in list order (leader picker).
     pub fn live_names(&self) -> Vec<SlotKey> {
         self.live_accounts().into_iter().map(|(s, _)| s).collect()
-    }
-
-    pub fn command_speed(&self) -> crate::game_keys::CommandSpeed {
-        self.command_speed
-    }
-
-    pub fn set_command_speed(&mut self, speed: crate::game_keys::CommandSpeed) {
-        if self.command_speed != speed {
-            self.command_speed = speed;
-            self.mark_dirty();
-        }
     }
 
     pub fn game_keys(&self) -> crate::game_keys::GameKeys {
@@ -821,7 +806,6 @@ impl App {
             npc_follow_delay_ms: self.npc_follow_delay_ms,
             game_keys: self.game_keys,
             group_leader: self.group_leader.clone(),
-            command_speed: self.command_speed,
         };
         let _ = config::save_atomic(path, &cfg);
     }

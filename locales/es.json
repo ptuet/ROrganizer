@@ -75,7 +75,7 @@
     "tab_options": "Opciones",
     "tab_about": "Acerca de",
     "tab_group": "Multicuenta",
-    "more_in_group": "Jefe de grupo, velocidad de los comandos, trayecto a un PNJ y teclas del juego: en la pestaña Multicuenta."
+    "more_in_group": "Jefe de grupo, trayecto a un PNJ y teclas del juego: en la pestaña Multicuenta."
   },
   "game_keys": {
     "intro": "Las teclas que ROrganizer pulsa en Dofus para la invitación, el zaap y los PNJ. Pon las mismas que en los atajos del juego.",
@@ -89,17 +89,12 @@
     "leader": "Jefe de grupo",
     "leader_first": "Primera de la lista",
     "leader_offline": "%{name} (no abierta)",
-    "speed": "Velocidad de los comandos",
-    "speed_normal": "Normal",
-    "speed_slow": "Lenta",
-    "speed_very_slow": "Muy lenta",
     "keys": "Teclas del juego"
   },
   "help": {
     "minimize_to_taskbar": "Marcado: «–» y «Activar» minimizan la ventana en la barra de tareas, abajo de la pantalla, para tener los botones a un clic. Sin marcar: se oculta en la bandeja del sistema, junto al reloj.",
     "shortcuts_only_in_dofus": "Marcado: tus atajos no hacen nada cuando estás en otra aplicación (navegador, Discord…); la tecla funciona normalmente allí. Sin marcar: funcionan en todas partes.",
     "always_on_top": "Marcado: la ventana queda por encima de todas, incluso al hacer clic en Dofus. Sin marcar: pasa detrás, como una ventana normal.",
-    "group_leader": "La cuenta que invita a las demás, a la que siguen en un trayecto a un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista.",
-    "command_speed": "Si algunos comandos fallan (chat que no se abre, texto cortado, cuenta saltada), tu PC necesita más tiempo entre teclas: pasa a Lenta o Muy lenta."
+    "group_leader": "La cuenta que invita a las demás, a la que siguen en un trayecto a un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista."
   }
 }

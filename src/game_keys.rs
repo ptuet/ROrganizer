@@ -61,30 +61,6 @@ impl Default for GameKeys {
     }
 }
 
-/// How fast the chat commands are typed. The delays between keys (chat
-/// opening, paste, send, window switch) are tuned on a fast PC; a slow one
-/// may miss keys, so they can be multiplied.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub enum CommandSpeed {
-    #[default]
-    Normal,
-    Slow,
-    VerySlow,
-}
-
-impl CommandSpeed {
-    pub const ALL: [CommandSpeed; 3] = [Self::Normal, Self::Slow, Self::VerySlow];
-
-    /// Multiplier applied to every delay of the chat commands.
-    pub fn factor(self) -> u32 {
-        match self {
-            Self::Normal => 1,
-            Self::Slow => 2,
-            Self::VerySlow => 3,
-        }
-    }
-}
-
 /// Which game key the capture modal is setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameKeyTarget {
@@ -132,13 +108,6 @@ mod tests {
         let keys: GameKeys = serde_json::from_str(r#"{"open_chat":{"vk":13}}"#).unwrap();
         assert_eq!(keys.open_chat, GameKey::plain(13));
         assert_eq!(keys.follow_leader, GameKeys::default().follow_leader);
-    }
-
-    #[test]
-    fn speed_multiplies_the_delays() {
-        let factors: Vec<u32> = CommandSpeed::ALL.iter().map(|s| s.factor()).collect();
-        assert_eq!(factors, [1, 2, 3]);
-        assert_eq!(CommandSpeed::default(), CommandSpeed::Normal);
     }
 
     #[test]

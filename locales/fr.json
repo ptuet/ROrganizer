@@ -75,7 +75,7 @@
     "tab_options": "Options",
     "tab_about": "À propos",
     "tab_group": "Multicompte",
-    "more_in_group": "Chef de groupe, vitesse des commandes, trajet vers un PNJ et touches du jeu : dans l’onglet Multicompte."
+    "more_in_group": "Chef de groupe, trajet vers un PNJ et touches du jeu : dans l’onglet Multicompte."
   },
   "game_keys": {
     "intro": "Les touches que ROrganizer presse dans Dofus pour l’invitation, le zaap et les PNJ. Mets les mêmes que dans les raccourcis du jeu.",
@@ -89,17 +89,12 @@
     "leader": "Chef de groupe",
     "leader_first": "Premier de la liste",
     "leader_offline": "%{name} (pas lancé)",
-    "speed": "Vitesse des commandes",
-    "speed_normal": "Normale",
-    "speed_slow": "Lente",
-    "speed_very_slow": "Très lente",
     "keys": "Touches du jeu"
   },
   "help": {
     "minimize_to_taskbar": "Coché : « – » et « Activer » réduisent la fenêtre dans la barre des tâches, en bas de l’écran, pour garder les boutons à un clic. Décoché : elle se cache dans la barre système, près de l’horloge.",
     "shortcuts_only_in_dofus": "Coché : tes raccourcis ne font rien quand tu es dans une autre application (navigateur, Discord…) ; la touche y fonctionne normalement. Décoché : ils marchent partout.",
     "always_on_top": "Coché : la fenêtre reste au-dessus de toutes les autres, même quand tu cliques sur Dofus. Décoché : elle passe derrière, comme une fenêtre normale.",
-    "group_leader": "Le compte qui invite les autres, que les autres suivent pendant un trajet vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste.",
-    "command_speed": "Si des commandes ne passent pas (chat qui ne s’ouvre pas, texte incomplet, compte sauté), ton PC a besoin de plus de temps entre les touches : passe en Lente, ou Très lente."
+    "group_leader": "Le compte qui invite les autres, que les autres suivent pendant un trajet vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
   }
 }

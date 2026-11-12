@@ -1,5 +1,5 @@
 //! Settings modal (gear button in the header), in three tabs: options,
-//! group commands (leader, speed, NPC follow, keys of the game), about.
+//! multi-account commands (leader, NPC follow, keys of the game), about.
 //! Every option has a "?" that unfolds its explanation under it.
 //!
 //! Layout follows the same backdrop + centred card pattern as
@@ -14,7 +14,7 @@ use egui::{Color32, CornerRadius, Frame, Margin, Sense, Stroke, StrokeKind, Vec2
 use rust_i18n::t;
 
 use crate::app::App;
-use crate::game_keys::{CommandSpeed, GameKeyTarget};
+use crate::game_keys::GameKeyTarget;
 use crate::theme::{self, Theme};
 
 /// The fork's repository: GitHub link and bug reports go there. The original
@@ -262,15 +262,14 @@ fn options_tab(ui: &mut egui::Ui, ctx: &egui::Context, app: &mut App, theme: The
     ui.add(
         egui::Label::new(
             egui::RichText::new(t!("settings.more_in_group"))
-                .size(10.5)
-                .italics()
+                .size(11.0)
                 .color(theme::text_tertiary(theme)),
         )
         .wrap(),
     );
 }
 
-/// Group commands: leader, speed, NPC follow, keys of the game. Returns the
+/// Group commands: leader, NPC follow, keys of the game. Returns the
 /// game key to capture when one of its rows was clicked.
 fn group_tab(ui: &mut egui::Ui, app: &mut App, theme: Theme) -> Option<GameKeyTarget> {
     let mut capture = None;
@@ -284,24 +283,6 @@ fn group_tab(ui: &mut egui::Ui, app: &mut App, theme: Theme) -> Option<GameKeyTa
                 section_label(ui, theme, &t!("group.leader"));
             });
             leader_combo(ui, app);
-            ui.add_space(10.0);
-
-            // Command speed.
-            option_row(ui, theme, "speed", &t!("help.command_speed"), |ui| {
-                section_label(ui, theme, &t!("group.speed"));
-            });
-            ui.horizontal(|ui| {
-                ui.add_space(22.0);
-                let mut speed = app.command_speed();
-                for (s, label) in CommandSpeed::ALL.into_iter().zip([
-                    t!("group.speed_normal"),
-                    t!("group.speed_slow"),
-                    t!("group.speed_very_slow"),
-                ]) {
-                    ui.selectable_value(&mut speed, s, egui::RichText::new(label).size(12.0));
-                }
-                app.set_command_speed(speed);
-            });
             ui.add_space(10.0);
 
             // NPC travel: follow the leader, and the pause before it.
