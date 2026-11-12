@@ -6,7 +6,7 @@
 
 **Gère tes comptes Dofus Unity et Rétro au clavier. Open-source. Sans télémétrie.**
 
-*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**, invite toute ton équipe en groupe ou envoie-la au même zaap **d'un clic**. Sans connexion réseau, sans usine à gaz.*
+*Tu joues jusqu'à 8 comptes en parallèle ? Bascule de l'un à l'autre **d'un seul appui clavier ou souris**, invite toute ton équipe en groupe, envoie-la au même zaap ou vers un PNJ **d'un clic**. Sans connexion réseau, sans usine à gaz.*
 
 [![Version](https://img.shields.io/github/v/release/ptuet/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/ptuet/ROrganizer/releases)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#licence)
@@ -33,7 +33,8 @@
 | Changement de compte, cycle, tri, barre des tâches | ✅ | ✅ |
 | **Inviter tous les comptes en groupe** | ✅ | — |
 | **Envoyer tous les comptes au même zaap** | ✅ | — |
-| Envoie des commandes au jeu | **Oui**, uniquement quand tu cliques sur ces deux boutons | **Jamais** |
+| **Envoyer tous les comptes vers un PNJ** | ✅ | — |
+| Envoie des commandes au jeu | **Oui**, uniquement quand tu cliques sur ces boutons | **Jamais** |
 
 Les deux se téléchargent sur la page [Releases](https://github.com/ptuet/ROrganizer/releases).
 Si tu veux un outil qui ne fait **que** changer de fenêtre, prends la
@@ -78,10 +79,11 @@ tout.
 - L'app **ne lit pas Dofus et ne le modifie pas**. Pour changer de
   compte, elle se contente d'écouter tes raccourcis et de mettre la
   bonne fenêtre devant.
-- **Seuls les boutons « invitation de groupe » et « zaap »** envoient
-  quelque chose au jeu : ils tapent pour toi `/invite <pseudo>` ou
-  `/zaap x,y` dans le chat, et seulement quand tu cliques dessus. La
-  version **vanilla** n'a pas ces boutons.
+- **Seuls les boutons « invitation de groupe », « zaap » et « PNJ »**
+  envoient quelque chose au jeu : ils tapent pour toi `/invite <pseudo>`,
+  `/zaap x,y` ou `/travel x,y` dans le chat et peuvent appuyer sur la
+  touche « suivre le chef » (Ctrl+W par défaut), et seulement quand tu
+  cliques dessus. La version **vanilla** n'a pas ces boutons.
 - **Aucune frappe clavier n'est enregistrée**. Les raccourcis sont
   identifiés à la volée puis oubliés.
 - Le seul fichier que l'app écrit, c'est **sa propre configuration**
@@ -107,10 +109,16 @@ tout.
   souris, le « suivant » repart de là où tu es vraiment
 - ✋ **Glisse-dépose** pour ranger tes comptes dans l'ordre que tu veux
 - 📊 **Tri de la barre des tâches** Windows dans le même ordre, d'un clic
-- 👥 **Invitation de groupe** : le premier compte de la liste invite tous
-  les autres
+- 👥 **Invitation de groupe** : le chef de groupe invite tous les autres
+  (par défaut le premier de la liste, au choix dans les réglages)
 - 🌀 **Zaap pour tous** : cherche un zaap par son nom, et tous tes comptes
-  s'y téléportent (`/zaap`, Dofus 3.7+)
+  s'y téléportent (`/zaap`, Dofus 3.7+) ; le chef de groupe active
+  ensuite le suivi (option)
+- 🧭 **Trajet vers un PNJ** : cherche parmi ~1 800 PNJ par nom ou par
+  zone ; tous tes comptes vont au zaap le plus proche, puis le chef de
+  groupe fait le trajet (`/travel`) et les autres le suivent (option)
+- ⭐ **Favoris** : jusqu'à 5 zaaps et 5 PNJ épinglés en haut de leur
+  liste
 - 🌓 **Thème clair ou sombre**, en FR / EN / ES
 - 📍 **Discret** : réduit dans la barre système, ou dans la barre des
   tâches si tu préfères garder les boutons à un clic (option dans les
@@ -157,7 +165,7 @@ raccourcis.
 **Est-ce que je risque de me faire bannir ?**
 Pour le changement de compte, ROrganizer **n'interagit pas avec
 Dofus** : il fait passer une fenêtre devant, exactement comme
-`Alt+Tab`. Les boutons **invitation de groupe** et **zaap** vont plus
+`Alt+Tab`. Les boutons **invitation de groupe**, **zaap** et **PNJ** vont plus
 loin : ils tapent des commandes de chat dans plusieurs comptes à partir
 d'un seul clic. Ankama ne publie pas de règle claire sur ce point, et
 une action qui agit sur plusieurs comptes à la fois est la zone la plus
@@ -165,9 +173,11 @@ sensible. Si tu veux éviter tout risque, utilise la version **vanilla**.
 Dans tous les cas, l'utilisation d'outils tiers reste à tes risques au
 regard des conditions générales d'utilisation d'Ankama.
 
-**Les boutons invitation et zaap ne font rien, ou ouvrent le menu du jeu ?**
-L'app ouvre le chat avec la touche **Espace**. Si tu l'as changée dans
-les raccourcis de Dofus, remets **Espace** pour « ouvrir le chat ».
+**Les boutons invitation, zaap et PNJ ne font rien, ou ouvrent le menu du jeu ?**
+L'app ouvre le chat avec **Espace** et active le suivi du chef avec
+**Ctrl+W**, les touches par défaut de Dofus. Si tu les as changées dans
+les raccourcis du jeu, mets les mêmes dans l'onglet **Multicompte** des
+réglages (l'engrenage).
 
 **Mes raccourcis marchent-ils pendant que je suis en jeu ?**
 Oui. Les raccourcis sont écoutés **au niveau global de Windows**,
@@ -218,8 +228,8 @@ qui existe aussi dans la version d'origine, tu peux aussi le signaler à
 
 ROrganizer a été créé par **[Loulouw](https://github.com/Loulouw)** —
 dépôt d'origine : [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer).
-Ce fork est maintenu par **[ptuet](https://github.com/ptuet)**. La liste
-des zaaps vient de la base communautaire [DofusDB](https://dofusdb.fr).
+Ce fork est maintenu par **[ptuet](https://github.com/ptuet)**. Les listes
+des zaaps et des PNJ viennent de la base communautaire [DofusDB](https://dofusdb.fr).
 
 ## Disclaimer
 

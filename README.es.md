@@ -26,12 +26,12 @@
 > (teclas AZERTY como `²`, un ciclo que sigue la ventana elegida con el
 > ratón) y añade funciones multicuenta: un segundo atajo para
 > siguiente / anterior, ordenar la barra de tareas, minimizar en la barra
-> de tareas, y dos botones que **envían comandos de chat al juego**:
+> de tareas, y tres botones que **envían comandos de chat al juego**:
 > invitar a todas las cuentas a un grupo y enviar todas las cuentas al
-> mismo zaap.
+> mismo zaap o hacia un PNJ.
 >
 > Se publican dos versiones en la [página de Releases](https://github.com/ptuet/ROrganizer/releases):
-> `ROrganizer-<versión>` con esos dos botones, y
+> `ROrganizer-<versión>` con esos botones, y
 > `ROrganizer-<versión>-vanilla`, que **nunca** envía nada al juego. La
 > descripción completa y actualizada está en el
 > [README en francés](README.md); el texto de abajo es el del autor
