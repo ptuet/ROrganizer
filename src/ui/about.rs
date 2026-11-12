@@ -419,13 +419,16 @@ fn help_button(ui: &mut egui::Ui, theme: Theme, open: bool) -> egui::Response {
     } else {
         ui.painter().circle_stroke(c, 7.0, Stroke::new(1.0, color));
     }
-    ui.painter().text(
-        c,
-        egui::Align2::CENTER_CENTER,
-        "?",
+    // Centred on the glyph's drawn bounds, not on its line box: the line box
+    // keeps room for descenders, which left the "?" off-centre in the circle.
+    let text_color = if open { theme::window_bg(theme) } else { color };
+    let galley = ui.painter().layout_no_wrap(
+        "?".to_string(),
         egui::FontId::proportional(11.0),
-        if open { theme::window_bg(theme) } else { color },
+        text_color,
     );
+    let pos = c - galley.mesh_bounds.center().to_vec2();
+    ui.painter().galley(pos, galley, text_color);
     if resp.hovered() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
     }

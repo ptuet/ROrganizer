@@ -576,7 +576,7 @@ par DWM, `FromPoint` traverse le popup.
 
 ### Invitation de groupe : seule fonction qui envoie des touches au jeu
 
-`win::chat` met le premier compte de la liste au premier plan et y envoie
+`win::chat` met le chef de groupe (réglable, premier de la liste par défaut) au premier plan et y envoie
 `/invite <pseudo>` pour chaque autre compte lancé. Contrairement au reste de
 l'app (qui ne fait que changer de fenêtre), c'est de l'injection d'entrées
 dans Dofus — à garder en tête vis-à-vis des CGU d'Ankama.
@@ -628,13 +628,13 @@ Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant comm
 `/zaap zx,zy;/travel x,y` (forme utilisée par les outils de trajet Dofus,
 commandes enchaînées par `;`, Dofus 3.7+).
 
-Option « Trajet vers un PNJ : suivre le premier compte » (`npc_follow_leader`,
+Option « Trajet vers un PNJ : suivre le chef de groupe » (`npc_follow_leader`,
 désactivée par défaut) : tous font `/zaap`, pause réglable
 (`npc_follow_delay_ms`, curseur 0,5–3 s, 0,5 s par défaut — validé en jeu ;
 2,5 s était trop long ; un PC lent peut avoir besoin de plus pour charger
 les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
-dans l'onglet Touches du jeu, envoyée avec le scan code du layout) et
-`/travel` sur le premier compte seulement. Plan construit par `npcs::travel_plan` (pur, testé),
+dans l'onglet Groupe, envoyée avec le scan code du layout) et
+`/travel` sur le chef de groupe seulement. Plan construit par `npcs::travel_plan` (pur, testé),
 exécuté par `win::chat::send_plan` qui prend des `Action` (taper, Ctrl+W,
 pause). ⚠ Ctrl+W bascule le suivi : s'il était déjà actif, il se coupe.
 

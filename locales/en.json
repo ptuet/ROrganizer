@@ -33,10 +33,10 @@
     "fork": "Fork maintained by ptuet",
     "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front",
     "always_on_top": "Always on top",
-    "npc_follow_leader": "NPC travel: follow the first account",
-    "npc_follow_leader_hint": "Checked: every account teleports to the zaap, then the first account turns on group follow (Ctrl+W) and is the only one to walk. Unchecked: each account walks by itself.",
+    "npc_follow_leader": "NPC travel: follow the group leader",
+    "npc_follow_leader_hint": "Checked: every account teleports to the zaap, then the group leader turns on follow (Ctrl+W by default) and is the only one to walk; the others follow. Unchecked: each account walks by itself.",
     "npc_follow_delay": "Pause",
-    "npc_follow_delay_hint": "Time given to the maps to load after the zaap, before the first account turns on follow. Raise it if some accounts don’t follow."
+    "npc_follow_delay_hint": "Time given to the maps to load after the zaap, before the group leader turns on follow. Raise it if some accounts don’t follow."
   },
   "tray": {
     "show": "Show",
