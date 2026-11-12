@@ -36,7 +36,9 @@
     "npc_follow_leader": "NPC travel: follow the group leader",
     "npc_follow_leader_hint": "Checked: every account teleports to the zaap, then the group leader turns on follow (Ctrl+W by default) and is the only one to walk; the others follow. Unchecked: each account walks by itself.",
     "npc_follow_delay": "Pause",
-    "npc_follow_delay_hint": "Time given to the maps to load after the zaap, before the group leader turns on follow. Raise it if some accounts don’t follow: your PC needs more time to load the maps."
+    "npc_follow_delay_hint": "Time given to the maps to load after the zaap, before the group leader turns on follow. Raise it if some accounts don’t follow: your PC needs more time to load the maps.",
+    "zaap_follow_leader": "Zaap: the group leader turns on follow on arrival",
+    "zaap_follow_leader_hint": "Checked: once every account has teleported, the group leader turns on follow (Ctrl+W by default), after the same pause as for NPCs. If follow was already on, the shortcut turns it off. Unchecked: nothing more after the zaap."
   },
   "tray": {
     "show": "Show",

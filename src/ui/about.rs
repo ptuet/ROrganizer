@@ -285,7 +285,14 @@ fn group_tab(ui: &mut egui::Ui, app: &mut App, theme: Theme) -> Option<GameKeyTa
             leader_combo(ui, app);
             ui.add_space(10.0);
 
-            // NPC travel: follow the leader, and the pause before it.
+            // Group zaap / NPC travel: follow the leader, and the pause
+            // before it (shared by both).
+            let mut zaap_follow = app.zaap_follow_leader();
+            option_row(ui, theme, "zaap_follow", &t!("about.zaap_follow_leader_hint"), |ui| {
+                if checkbox(ui, theme, &mut zaap_follow, &t!("about.zaap_follow_leader")) {
+                    app.set_zaap_follow_leader(zaap_follow);
+                }
+            });
             let mut follow = app.npc_follow_leader();
             option_row(ui, theme, "follow", &t!("about.npc_follow_leader_hint"), |ui| {
                 if checkbox(ui, theme, &mut follow, &t!("about.npc_follow_leader")) {
@@ -301,7 +308,7 @@ fn group_tab(ui: &mut egui::Ui, app: &mut App, theme: Theme) -> Option<GameKeyTa
                     .fixed_decimals(1)
                     .suffix(" s")
                     .text(t!("about.npc_follow_delay").to_string());
-                if ui.add_enabled(follow, slider).changed() {
+                if ui.add_enabled(follow || zaap_follow, slider).changed() {
                     app.set_npc_follow_delay_ms((secs * 1000.0).round() as u32);
                 }
             });

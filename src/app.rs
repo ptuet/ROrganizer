@@ -158,6 +158,8 @@ pub struct App {
     always_on_top: bool,
     /// NPC travel: follow the first account instead of each one walking.
     npc_follow_leader: bool,
+    /// Group zaap: the leader turns on follow at the end (setting).
+    zaap_follow_leader: bool,
     /// Pause before the leader's follow shortcut, in ms (setting).
     npc_follow_delay_ms: u32,
     /// Keys of the game pressed by the chat commands (settings).
@@ -218,6 +220,7 @@ impl App {
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
         let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
+        let zaap_follow_leader = stored.as_ref().is_some_and(|c| c.zaap_follow_leader);
         let npc_follow_delay_ms = stored
             .as_ref()
             .map_or(crate::npcs::FOLLOW_DELAY_DEFAULT_MS, |c| c.npc_follow_delay_ms)
@@ -309,6 +312,7 @@ impl App {
             shortcuts_only_in_dofus,
             always_on_top,
             npc_follow_leader,
+            zaap_follow_leader,
             npc_follow_delay_ms,
             game_keys,
             group_leader,
@@ -530,11 +534,10 @@ impl App {
     /// Every launched account types `/zaap x,y`, in list order, then the
     /// first account comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
-        let plan = self
-            .group_hwnds()
-            .into_iter()
-            .map(|h| win::chat::Action::Type(h, vec![zaap.command()]))
-            .collect();
+        let follow = self
+            .zaap_follow_leader
+            .then(|| Duration::from_millis(u64::from(self.npc_follow_delay_ms)));
+        let plan = zaap.plan(&self.group_hwnds(), follow);
         self.run_plan(ctx, plan);
     }
 
@@ -636,6 +639,17 @@ impl App {
     pub fn set_npc_follow_leader(&mut self, on: bool) {
         if self.npc_follow_leader != on {
             self.npc_follow_leader = on;
+            self.mark_dirty();
+        }
+    }
+
+    pub fn zaap_follow_leader(&self) -> bool {
+        self.zaap_follow_leader
+    }
+
+    pub fn set_zaap_follow_leader(&mut self, on: bool) {
+        if self.zaap_follow_leader != on {
+            self.zaap_follow_leader = on;
             self.mark_dirty();
         }
     }
@@ -838,6 +852,7 @@ impl App {
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
             always_on_top: self.always_on_top,
             npc_follow_leader: self.npc_follow_leader,
+            zaap_follow_leader: self.zaap_follow_leader,
             npc_follow_delay_ms: self.npc_follow_delay_ms,
             game_keys: self.game_keys,
             group_leader: self.group_leader.clone(),

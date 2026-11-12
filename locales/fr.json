@@ -36,7 +36,9 @@
     "npc_follow_leader": "Trajet vers un PNJ : suivre le chef de groupe",
     "npc_follow_leader_hint": "Coché : tous les comptes se téléportent au zaap, puis le chef de groupe active le suivi (Ctrl+W par défaut) et est le seul à faire le trajet ; les autres le suivent. Décoché : chaque compte fait son propre trajet.",
     "npc_follow_delay": "Pause",
-    "npc_follow_delay_hint": "Temps laissé aux cartes pour charger après le zaap, avant que le chef de groupe active le suivi. Augmente-la si certains comptes ne suivent pas : ton PC met plus de temps à charger les cartes."
+    "npc_follow_delay_hint": "Temps laissé aux cartes pour charger après le zaap, avant que le chef de groupe active le suivi. Augmente-la si certains comptes ne suivent pas : ton PC met plus de temps à charger les cartes.",
+    "zaap_follow_leader": "Zaap : le chef de groupe active le suivi à l’arrivée",
+    "zaap_follow_leader_hint": "Coché : une fois tous les comptes téléportés, le chef de groupe active le suivi (Ctrl+W par défaut), après la même pause que pour les PNJ. Si le suivi était déjà actif, le raccourci le coupe. Décoché : rien de plus après le zaap."
   },
   "tray": {
     "show": "Afficher",

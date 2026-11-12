@@ -38,6 +38,10 @@ pub struct StoredConfig {
     /// the only one to walk. Off → each account walks by itself.
     #[serde(default)]
     pub npc_follow_leader: bool,
+    /// Group zaap: once everyone has teleported, the leader turns on group
+    /// follow. Off → nothing after the teleport.
+    #[serde(default)]
+    pub zaap_follow_leader: bool,
     /// Pause before the leader's follow shortcut, in ms (0.5–3 s).
     #[serde(default = "default_follow_delay")]
     pub npc_follow_delay_ms: u32,
@@ -143,6 +147,7 @@ mod tests {
             shortcuts_only_in_dofus: false,
             always_on_top: true,
             npc_follow_leader: true,
+            zaap_follow_leader: true,
             npc_follow_delay_ms: 1200,
             game_keys: crate::game_keys::GameKeys::default(),
             group_leader: Some("Dowoip".into()),
@@ -198,6 +203,7 @@ mod tests {
         assert_eq!(loaded.shortcuts_only_in_dofus, cfg.shortcuts_only_in_dofus);
         assert_eq!(loaded.always_on_top, cfg.always_on_top);
         assert_eq!(loaded.npc_follow_leader, cfg.npc_follow_leader);
+        assert_eq!(loaded.zaap_follow_leader, cfg.zaap_follow_leader);
         assert_eq!(loaded.npc_follow_delay_ms, cfg.npc_follow_delay_ms);
         assert_eq!(loaded.group_leader, cfg.group_leader);
         assert_eq!(loaded.favorite_zaaps, cfg.favorite_zaaps);

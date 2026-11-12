@@ -608,6 +608,12 @@ tape `/zaap x,y` à tour de rôle (`win::chat::send_plan`), puis le premier
 compte de la liste revient devant. `/zaap` vérifié en jeu : téléporte sans
 confirmation, depuis n'importe quelle map.
 
+Option « Zaap : le chef de groupe active le suivi à l'arrivée »
+(`zaap_follow_leader`, désactivée par défaut) : après les `/zaap`, même
+pause que pour les PNJ (`npc_follow_delay_ms`, curseur partagé) puis la
+touche « suivre le chef » sur le chef de groupe. Plan pur et testé :
+`Zaap::plan`. Même piège que pour les PNJ : la touche bascule le suivi.
+
 La liste (`src/zaaps.rs`, 45 zaaps) vient de **DofusDB** (indices de carte
 nommés « Zaap » + sous-zone = « Territoire » en jeu), générée **à la main**
 par `scripts/gen_zaaps.py` — jamais au build (pas de réseau). 8 entrées
