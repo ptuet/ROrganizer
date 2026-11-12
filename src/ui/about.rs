@@ -22,7 +22,7 @@ const ISSUES_URL: &str = "https://github.com/ptuet/ROrganizer/issues";
 const LICENSE_LABEL: &str = "MIT OR Apache-2.0";
 /// Card height; `App::apply_dynamic_height` keeps the viewport at least this
 /// tall while the modal is open, so the close button is never clipped.
-pub const ABOUT_CARD_HEIGHT: f32 = 500.0;
+pub const ABOUT_CARD_HEIGHT: f32 = 524.0;
 
 pub fn draw(ctx: &egui::Context, app: &mut App) {
     if !app.is_about_open() {
@@ -206,6 +206,20 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                             .changed()
                         {
                             app.set_always_on_top(ctx, on_top);
+                        }
+                        ui.add_space(4.0);
+                        let mut follow = app.npc_follow_leader();
+                        if ui
+                            .checkbox(
+                                &mut follow,
+                                egui::RichText::new(t!("about.npc_follow_leader"))
+                                    .size(12.0)
+                                    .color(theme::text_secondary(theme)),
+                            )
+                            .on_hover_text(t!("about.npc_follow_leader_hint").to_string())
+                            .changed()
+                        {
+                            app.set_npc_follow_leader(follow);
                         }
 
                         ui.add_space(12.0);

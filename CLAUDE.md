@@ -628,6 +628,14 @@ Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant comm
 `/zaap zx,zy;/travel x,y` (forme utilisée par les outils de trajet Dofus,
 commandes enchaînées par `;`, Dofus 3.7+).
 
+Option « Trajet vers un PNJ : suivre le premier compte » (`npc_follow_leader`,
+désactivée par défaut) : tous font `/zaap`, pause `FOLLOW_SETTLE` (2,5 s,
+chargement des cartes), puis **Ctrl+W** (suivi du chef, raccourci par défaut
+du jeu, envoyé avec le scan code du layout) et `/travel` sur le premier
+compte seulement. Plan construit par `npcs::travel_plan` (pur, testé),
+exécuté par `win::chat::send_plan` qui prend des `Action` (taper, Ctrl+W,
+pause). ⚠ Ctrl+W bascule le suivi : s'il était déjà actif, il se coupe.
+
 La liste (`src/npcs.rs`, 1 771 entrées) est générée **à la main** par
 `scripts/gen_npcs.py` depuis DofusDB. Les données du client n'ont **pas** la
 position des PNJ : elle vient des **objectifs de quêtes** (types 1, 2, 3, 9,

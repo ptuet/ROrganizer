@@ -34,6 +34,7 @@ use super::focus::{focus_window, foreground_window};
 
 const CF_UNICODETEXT: u32 = 13;
 const VK_V: VIRTUAL_KEY = VIRTUAL_KEY(0x56);
+const VK_W: VIRTUAL_KEY = VIRTUAL_KEY(0x57);
 
 /// Key that opens the chat. Dofus lets players rebind it; Space is what the
 /// author's client uses (Enter did nothing there).
@@ -60,21 +61,35 @@ pub fn is_busy() -> bool {
     SENDING.load(Ordering::Acquire)
 }
 
-/// Commands to type in one window.
-pub type Step = (isize, Vec<String>);
+/// One step of a plan.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Action {
+    /// Commands typed in the chat of this window.
+    Type(isize, Vec<String>),
+    /// "Follow the group leader" shortcut (Ctrl+W, the game's default)
+    /// pressed in this window.
+    FollowLeader(isize),
+    /// Wait, e.g. for maps to load after a teleport.
+    Pause(Duration),
+}
 
-/// For each step in order, focuses the window and sends its commands through
-/// the chat, on a background thread; then brings `finish_on` to the front.
-/// The global shortcuts are paused meanwhile, so the injected keys can't
-/// trigger a binding. Stops everything if a window won't come to the front
-/// or the user brings another one forward. The clipboard's text is restored
-/// at the end. `on_done` runs once finished (the UI uses it to repaint).
+/// Runs the actions in order on a background thread, then brings
+/// `finish_on` to the front. The global shortcuts are paused meanwhile, so
+/// the injected keys can't trigger a binding. Stops everything if a window
+/// won't come to the front or the user brings another one forward. The
+/// clipboard's text is restored at the end. `on_done` runs once finished
+/// (the UI uses it to repaint).
 pub fn send_plan(
-    plan: Vec<Step>,
+    plan: Vec<Action>,
     finish_on: Option<isize>,
     on_done: impl FnOnce() + Send + 'static,
 ) {
-    if plan.iter().all(|(_, cmds)| cmds.is_empty())
+    let has_input = plan.iter().any(|a| match a {
+        Action::Type(_, cmds) => !cmds.is_empty(),
+        Action::FollowLeader(_) => true,
+        Action::Pause(_) => false,
+    });
+    if !has_input
         || SENDING
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_err()
@@ -84,7 +99,14 @@ pub fn send_plan(
     thread::spawn(move || {
         crate::hooks::set_paused(true);
         let saved = read_clipboard_text();
-        let completed = plan.iter().all(|(hwnd, cmds)| run(*hwnd, cmds));
+        let completed = plan.iter().all(|action| match action {
+            Action::Type(hwnd, cmds) => run(*hwnd, cmds),
+            Action::FollowLeader(hwnd) => follow_leader(*hwnd),
+            Action::Pause(d) => {
+                thread::sleep(*d);
+                true
+            }
+        });
         if completed && let Some(hwnd) = finish_on {
             focus_window(hwnd);
         }
@@ -106,15 +128,9 @@ fn run(target: isize, commands: &[String]) -> bool {
     if commands.is_empty() {
         return true;
     }
-    focus_window(target);
-    let start = Instant::now();
-    while foreground_window() != Some(target) {
-        if start.elapsed() > FOCUS_TIMEOUT {
-            return false;
-        }
-        thread::sleep(Duration::from_millis(25));
+    if !bring_to_front(target) {
+        return false;
     }
-    thread::sleep(FOCUS_SETTLE);
 
     tap(VK_OPEN_CHAT);
     thread::sleep(STEP_DELAY);
@@ -135,6 +151,36 @@ fn run(target: isize, commands: &[String]) -> bool {
         return false;
     }
     tap(VK_ESCAPE);
+    true
+}
+
+/// Focuses `target` and waits until it is really in front. False if it
+/// won't come.
+fn bring_to_front(target: isize) -> bool {
+    focus_window(target);
+    let start = Instant::now();
+    while foreground_window() != Some(target) {
+        if start.elapsed() > FOCUS_TIMEOUT {
+            return false;
+        }
+        thread::sleep(Duration::from_millis(25));
+    }
+    thread::sleep(FOCUS_SETTLE);
+    true
+}
+
+/// Presses Ctrl+W in `target`: the game's default "follow the group leader"
+/// shortcut. The key goes with its scan code on the user's layout, as if
+/// pressed by hand (the key labelled W, on AZERTY as well).
+fn follow_leader(target: isize) -> bool {
+    if !bring_to_front(target) {
+        return false;
+    }
+    press(VK_CONTROL);
+    thread::sleep(KEY_HOLD);
+    tap(VK_W);
+    release(VK_CONTROL);
+    thread::sleep(AFTER_SEND);
     true
 }
 

@@ -11,6 +11,7 @@
 //! The zaap is the nearest one of the NPC's region (so islands keep their
 //! own zaaps), else the one the game associates with the subarea.
 
+use crate::win::chat::Action;
 use crate::zaaps::{matches_all, query_words};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,13 +30,50 @@ impl Npc {
     /// Several commands on one line are separated by ';' (Dofus 3.7+), the
     /// form used by other Dofus travel tools.
     pub fn command(&self) -> String {
-        let (zx, zy) = self.zaap;
-        if (zx, zy) == (self.x, self.y) {
-            format!("/zaap {zx},{zy}")
-        } else {
-            format!("/zaap {zx},{zy};/travel {},{}", self.x, self.y)
+        match self.travel_command() {
+            Some(travel) => format!("{};{travel}", self.zaap_command()),
+            None => self.zaap_command(),
         }
     }
+
+    pub fn zaap_command(&self) -> String {
+        format!("/zaap {},{}", self.zaap.0, self.zaap.1)
+    }
+
+    /// `None` when the NPC stands on the zaap's map: nothing left to walk.
+    pub fn travel_command(&self) -> Option<String> {
+        (self.zaap != (self.x, self.y)).then(|| format!("/travel {},{}", self.x, self.y))
+    }
+}
+
+/// Wait between the last account's teleport and the leader's shortcut, so
+/// every member's zaap map has loaded before the leader starts walking.
+pub const FOLLOW_SETTLE: std::time::Duration = std::time::Duration::from_millis(2500);
+
+/// What every account types to reach `npc`; `accounts` in list order, the
+/// first one being the group leader.
+/// - `follow_leader` off: each account teleports and walks by itself.
+/// - on: everyone teleports, then the leader turns on "follow the group
+///   leader" (Ctrl+W) and is the only one to walk; the others follow.
+pub fn travel_plan(npc: &Npc, accounts: &[isize], follow_leader: bool) -> Vec<Action> {
+    let Some(&leader) = accounts.first() else {
+        return Vec::new();
+    };
+    let travel = npc.travel_command();
+    if !follow_leader || travel.is_none() {
+        return accounts
+            .iter()
+            .map(|&h| Action::Type(h, vec![npc.command()]))
+            .collect();
+    }
+    let mut plan: Vec<Action> = accounts
+        .iter()
+        .map(|&h| Action::Type(h, vec![npc.zaap_command()]))
+        .collect();
+    plan.push(Action::Pause(FOLLOW_SETTLE));
+    plan.push(Action::FollowLeader(leader));
+    plan.push(Action::Type(leader, travel.into_iter().collect()));
+    plan
 }
 
 /// NPCs whose name or subarea contains every word of `query`, ignoring case
@@ -1840,6 +1878,52 @@ mod tests {
     fn npc_on_the_zaap_map_only_needs_the_zaap() {
         let n = Npc { name: "X", area: "Y", x: -2, y: 0, zaap: (-2, 0) };
         assert_eq!(n.command(), "/zaap -2,0");
+    }
+
+    const FAR: Npc = Npc { name: "X", area: "Y", x: 3, y: 12, zaap: (-1, 13) };
+    const ON_ZAAP: Npc = Npc { name: "X", area: "Y", x: -2, y: 0, zaap: (-2, 0) };
+
+    #[test]
+    fn everyone_travels_by_default() {
+        assert_eq!(
+            travel_plan(&FAR, &[1, 2], false),
+            vec![
+                Action::Type(1, vec!["/zaap -1,13;/travel 3,12".into()]),
+                Action::Type(2, vec!["/zaap -1,13;/travel 3,12".into()]),
+            ]
+        );
+    }
+
+    #[test]
+    fn follow_mode_only_the_leader_walks() {
+        assert_eq!(
+            travel_plan(&FAR, &[1, 2, 3], true),
+            vec![
+                Action::Type(1, vec!["/zaap -1,13".into()]),
+                Action::Type(2, vec!["/zaap -1,13".into()]),
+                Action::Type(3, vec!["/zaap -1,13".into()]),
+                Action::Pause(FOLLOW_SETTLE),
+                Action::FollowLeader(1),
+                Action::Type(1, vec!["/travel 3,12".into()]),
+            ]
+        );
+    }
+
+    #[test]
+    fn follow_mode_without_walk_is_just_the_zaap() {
+        // NPC on the zaap's map: no follow shortcut, nothing to walk.
+        assert_eq!(
+            travel_plan(&ON_ZAAP, &[1, 2], true),
+            vec![
+                Action::Type(1, vec!["/zaap -2,0".into()]),
+                Action::Type(2, vec!["/zaap -2,0".into()]),
+            ]
+        );
+    }
+
+    #[test]
+    fn no_account_no_plan() {
+        assert!(travel_plan(&FAR, &[], true).is_empty());
     }
 
     #[test]

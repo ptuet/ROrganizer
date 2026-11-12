@@ -32,7 +32,9 @@
     "minimize_to_taskbar": "Minimizar en la barra de tareas (no la bandeja del sistema)",
     "fork": "Fork mantenido por ptuet",
     "shortcuts_only_in_dofus": "Atajos activos solo cuando Dofus está en primer plano",
-    "always_on_top": "Siempre en primer plano"
+    "always_on_top": "Siempre en primer plano",
+    "npc_follow_leader": "Trayecto a un PNJ: seguir a la primera cuenta",
+    "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego la primera activa el seguimiento de grupo (Ctrl+W) y es la única en hacer el trayecto. Sin marcar: cada cuenta hace su propio trayecto."
   },
   "tray": {
     "show": "Mostrar",

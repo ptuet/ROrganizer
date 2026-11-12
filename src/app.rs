@@ -142,6 +142,8 @@ pub struct App {
     shortcuts_only_in_dofus: bool,
     /// Window kept above every other one (option, off by default).
     always_on_top: bool,
+    /// NPC travel: follow the first account instead of each one walking.
+    npc_follow_leader: bool,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
@@ -188,6 +190,7 @@ impl App {
         // Off by default: the window is created normal (main.rs) and only
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
+        let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -264,6 +267,7 @@ impl App {
             minimize_to_taskbar,
             shortcuts_only_in_dofus,
             always_on_top,
+            npc_follow_leader,
             show_about: false,
             zaap_query: None,
             npc_query: None,
@@ -458,32 +462,50 @@ impl App {
         };
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
-        win::chat::send_plan(vec![(*leader, commands)], None, move || ctx.request_repaint());
+        let plan = vec![win::chat::Action::Type(*leader, commands)];
+        win::chat::send_plan(plan, None, move || ctx.request_repaint());
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
     /// first account comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
-        self.command_all(ctx, zaap.command());
-    }
-
-    /// Every launched account teleports to the NPC's zaap and walks to it
-    /// (`/zaap …;/travel …`), in list order, then the first account comes
-    /// back to the front.
-    pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
-        self.command_all(ctx, npc.command());
-    }
-
-    /// The same chat command typed by every launched account, in list order.
-    fn command_all(&self, ctx: &egui::Context, command: String) {
-        let accounts = self.live_accounts();
-        let plan: Vec<win::chat::Step> = accounts
-            .iter()
-            .map(|(_, hwnd)| (*hwnd, vec![command.clone()]))
+        let plan = self
+            .live_hwnds()
+            .into_iter()
+            .map(|h| win::chat::Action::Type(h, vec![zaap.command()]))
             .collect();
-        let first = accounts.first().map(|(_, hwnd)| *hwnd);
+        self.run_plan(ctx, plan);
+    }
+
+    /// Every launched account goes to the NPC: each one teleports and walks,
+    /// or (option) everyone teleports and follows the first account, the
+    /// only one to walk. The first account comes back to the front.
+    pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
+        let plan = crate::npcs::travel_plan(npc, &self.live_hwnds(), self.npc_follow_leader);
+        self.run_plan(ctx, plan);
+    }
+
+    /// Runs a chat plan, then brings the first account back to the front.
+    fn run_plan(&self, ctx: &egui::Context, plan: Vec<win::chat::Action>) {
+        let first = self.live_hwnds().first().copied();
         let ctx = ctx.clone();
         win::chat::send_plan(plan, first, move || ctx.request_repaint());
+    }
+
+    /// HWNDs of the launched accounts, in list order.
+    fn live_hwnds(&self) -> Vec<isize> {
+        self.live_accounts().into_iter().map(|(_, h)| h).collect()
+    }
+
+    pub fn npc_follow_leader(&self) -> bool {
+        self.npc_follow_leader
+    }
+
+    pub fn set_npc_follow_leader(&mut self, on: bool) {
+        if self.npc_follow_leader != on {
+            self.npc_follow_leader = on;
+            self.mark_dirty();
+        }
     }
 
     pub fn open_npc(&mut self) {
@@ -672,6 +694,7 @@ impl App {
             minimize_to_taskbar: self.minimize_to_taskbar,
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
             always_on_top: self.always_on_top,
+            npc_follow_leader: self.npc_follow_leader,
         };
         let _ = config::save_atomic(path, &cfg);
     }
