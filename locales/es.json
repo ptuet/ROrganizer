@@ -68,5 +68,18 @@
     "search_hint": "Buscar un PNJ o una zona…",
     "no_result": "Ningún PNJ encontrado",
     "hint": "Clic o Intro: zaap más cercano y trayecto · Esc para cerrar"
+  },
+  "settings": {
+    "tab_options": "Opciones",
+    "tab_keys": "Teclas del juego",
+    "tab_about": "Acerca de"
+  },
+  "game_keys": {
+    "intro": "Las teclas que ROrganizer pulsa en Dofus para la invitación, el zaap y los PNJ. Pon las mismas que en los atajos del juego.",
+    "open_chat": "Abrir el chat",
+    "follow_leader": "Seguir al jefe de grupo",
+    "modal_title": "Tecla del juego",
+    "prompt": "Pulsa la tecla o combinación usada en Dofus",
+    "cancel_hint": "Esc para cancelar"
   }
 }

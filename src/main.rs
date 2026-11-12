@@ -6,6 +6,7 @@ mod app;
 mod assets;
 mod class_icon;
 mod config;
+mod game_keys;
 mod hooks;
 mod i18n;
 mod npcs;

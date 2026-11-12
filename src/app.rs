@@ -144,6 +144,12 @@ pub struct App {
     always_on_top: bool,
     /// NPC travel: follow the first account instead of each one walking.
     npc_follow_leader: bool,
+    /// Keys of the game pressed by the chat commands (settings).
+    game_keys: crate::game_keys::GameKeys,
+    /// Game key being set in the capture modal; the settings reopen after.
+    game_key_capture: Option<crate::game_keys::GameKeyTarget>,
+    /// Tab shown in the settings modal.
+    settings_tab: ui::about::SettingsTab,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
@@ -191,6 +197,7 @@ impl App {
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
         let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
+        let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -268,6 +275,9 @@ impl App {
             shortcuts_only_in_dofus,
             always_on_top,
             npc_follow_leader,
+            game_keys,
+            game_key_capture: None,
+            settings_tab: ui::about::SettingsTab::default(),
             show_about: false,
             zaap_query: None,
             npc_query: None,
@@ -463,7 +473,7 @@ impl App {
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
         let plan = vec![win::chat::Action::Type(*leader, commands)];
-        win::chat::send_plan(plan, None, move || ctx.request_repaint());
+        win::chat::send_plan(plan, self.game_keys, None, move || ctx.request_repaint());
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
@@ -489,12 +499,44 @@ impl App {
     fn run_plan(&self, ctx: &egui::Context, plan: Vec<win::chat::Action>) {
         let first = self.live_hwnds().first().copied();
         let ctx = ctx.clone();
-        win::chat::send_plan(plan, first, move || ctx.request_repaint());
+        win::chat::send_plan(plan, self.game_keys, first, move || ctx.request_repaint());
     }
 
     /// HWNDs of the launched accounts, in list order.
     fn live_hwnds(&self) -> Vec<isize> {
         self.live_accounts().into_iter().map(|(_, h)| h).collect()
+    }
+
+    pub fn game_keys(&self) -> crate::game_keys::GameKeys {
+        self.game_keys
+    }
+
+    pub fn settings_tab(&self) -> ui::about::SettingsTab {
+        self.settings_tab
+    }
+
+    pub fn set_settings_tab(&mut self, tab: ui::about::SettingsTab) {
+        self.settings_tab = tab;
+    }
+
+    pub fn game_key_capture(&self) -> Option<crate::game_keys::GameKeyTarget> {
+        self.game_key_capture
+    }
+
+    /// Opens the capture modal for a game key. The settings close meanwhile
+    /// (the capture modal is drawn under them) and reopen afterwards.
+    pub fn start_game_key_capture(&mut self, target: crate::game_keys::GameKeyTarget) {
+        self.show_about = false;
+        self.game_key_capture = Some(target);
+    }
+
+    pub fn finish_game_key_capture(&mut self, key: Option<crate::game_keys::GameKey>) {
+        if let (Some(target), Some(key)) = (self.game_key_capture, key) {
+            self.game_keys.set(target, key);
+            self.mark_dirty();
+        }
+        self.game_key_capture = None;
+        self.show_about = true;
     }
 
     pub fn npc_follow_leader(&self) -> bool {
@@ -695,6 +737,7 @@ impl App {
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
             always_on_top: self.always_on_top,
             npc_follow_leader: self.npc_follow_leader,
+            game_keys: self.game_keys,
         };
         let _ = config::save_atomic(path, &cfg);
     }

@@ -68,5 +68,18 @@
     "search_hint": "Search an NPC or an area…",
     "no_result": "No NPC found",
     "hint": "Click or Enter: nearest zaap then travel · Esc to close"
+  },
+  "settings": {
+    "tab_options": "Options",
+    "tab_keys": "Game keys",
+    "tab_about": "About"
+  },
+  "game_keys": {
+    "intro": "The keys ROrganizer presses in Dofus for the invite, zaap and NPC buttons. Use the same as in the game’s shortcuts.",
+    "open_chat": "Open the chat",
+    "follow_leader": "Follow the group leader",
+    "modal_title": "Game key",
+    "prompt": "Press the key or combination used in Dofus",
+    "cancel_hint": "Esc to cancel"
   }
 }

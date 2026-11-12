@@ -48,7 +48,7 @@ impl Npc {
 
 /// Wait between the last account's teleport and the leader's shortcut, so
 /// every member's zaap map has loaded before the leader starts walking.
-pub const FOLLOW_SETTLE: std::time::Duration = std::time::Duration::from_millis(2500);
+pub const FOLLOW_SETTLE: std::time::Duration = std::time::Duration::from_millis(500);
 
 /// What every account types to reach `npc`; `accounts` in list order, the
 /// first one being the group leader.

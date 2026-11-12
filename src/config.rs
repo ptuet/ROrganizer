@@ -38,6 +38,10 @@ pub struct StoredConfig {
     /// the only one to walk. Off → each account walks by itself.
     #[serde(default)]
     pub npc_follow_leader: bool,
+    /// Keys of the game ROrganizer presses itself (open chat, follow the
+    /// leader). Missing → the game's defaults.
+    #[serde(default)]
+    pub game_keys: crate::game_keys::GameKeys,
 }
 
 fn default_true() -> bool {
@@ -123,6 +127,7 @@ mod tests {
             shortcuts_only_in_dofus: false,
             always_on_top: true,
             npc_follow_leader: true,
+            game_keys: crate::game_keys::GameKeys::default(),
         }
     }
 

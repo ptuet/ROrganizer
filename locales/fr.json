@@ -68,5 +68,18 @@
     "search_hint": "Rechercher un PNJ ou une zone…",
     "no_result": "Aucun PNJ trouvé",
     "hint": "Clic ou Entrée : zaap le plus proche puis trajet · Échap pour fermer"
+  },
+  "settings": {
+    "tab_options": "Options",
+    "tab_keys": "Touches du jeu",
+    "tab_about": "À propos"
+  },
+  "game_keys": {
+    "intro": "Les touches que ROrganizer presse dans Dofus pour l’invitation, le zaap et les PNJ. Mets les mêmes que dans les raccourcis du jeu.",
+    "open_chat": "Ouvrir le chat",
+    "follow_leader": "Suivre le chef de groupe",
+    "modal_title": "Touche du jeu",
+    "prompt": "Appuie sur la touche ou la combinaison utilisée dans Dofus",
+    "cancel_hint": "Échap pour annuler"
   }
 }
