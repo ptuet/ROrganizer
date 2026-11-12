@@ -14,9 +14,9 @@ Une release contient **un seul fichier** : un exécutable nommé
 `ROrganizer-<version>-x86_64-windows.exe`. Le fork publie deux variantes,
 qui se distinguent par leur numéro de version :
 
-- `ROrganizer-1.4.0-x86_64-windows.exe` : avec les commandes de groupe
-  (invitation, zaap) ;
-- `ROrganizer-1.4.0-vanilla-x86_64-windows.exe` : sans aucune interaction
+- `ROrganizer-1.5.0-x86_64-windows.exe` : avec les commandes de groupe
+  (invitation, zaap, PNJ) ;
+- `ROrganizer-1.4.2-vanilla-x86_64-windows.exe` : sans aucune interaction
   avec le client Dofus.
 
 Il n'existe **aucune** distribution officielle sous une autre forme.
@@ -44,7 +44,7 @@ Le **SHA256** de chaque fichier publié est affiché par GitHub à côté de
 son nom sur la page de la release. Compare-le au tien :
 
 ```powershell
-Get-FileHash .\ROrganizer-1.4.0-x86_64-windows.exe -Algorithm SHA256
+Get-FileHash .\ROrganizer-1.5.0-x86_64-windows.exe -Algorithm SHA256
 ```
 
 Si les deux ne correspondent pas, le binaire que tu as n'est pas celui
@@ -55,7 +55,7 @@ GitHub, qui le relie de façon cryptographique à ce dépôt, au tag publié et
 au workflow qui l'a compilé. Avec le [GitHub CLI](https://cli.github.com) :
 
 ```powershell
-gh attestation verify .\ROrganizer-1.4.0-x86_64-windows.exe --repo ptuet/ROrganizer
+gh attestation verify .\ROrganizer-1.5.0-x86_64-windows.exe --repo ptuet/ROrganizer
 ```
 
 Une attestation valide prouve que le fichier a été compilé par GitHub
@@ -125,9 +125,9 @@ A release contains **a single file**: an executable named
 `ROrganizer-<version>-x86_64-windows.exe`. The fork publishes two variants,
 told apart by their version number:
 
-- `ROrganizer-1.4.0-x86_64-windows.exe`: with the group commands (invite,
-  zaap);
-- `ROrganizer-1.4.0-vanilla-x86_64-windows.exe`: no interaction with the
+- `ROrganizer-1.5.0-x86_64-windows.exe`: with the group commands (invite,
+  zaap, NPC);
+- `ROrganizer-1.4.2-vanilla-x86_64-windows.exe`: no interaction with the
   Dofus client at all.
 
 No other distribution channel or packaging is official. ROrganizer is
@@ -151,7 +151,7 @@ GitHub displays the **SHA256** of every published asset next to its name
 on the release page. Compare it with yours:
 
 ```powershell
-Get-FileHash .\ROrganizer-1.4.0-x86_64-windows.exe -Algorithm SHA256
+Get-FileHash .\ROrganizer-1.5.0-x86_64-windows.exe -Algorithm SHA256
 ```
 
 If they differ, the binary you have is not the one published here —
@@ -162,7 +162,7 @@ cryptographically binding it to this repository, the published tag and
 the workflow that compiled it. Using the [GitHub CLI](https://cli.github.com):
 
 ```powershell
-gh attestation verify .\ROrganizer-1.4.0-x86_64-windows.exe --repo ptuet/ROrganizer
+gh attestation verify .\ROrganizer-1.5.0-x86_64-windows.exe --repo ptuet/ROrganizer
 ```
 
 A valid attestation proves the file was built by GitHub from this

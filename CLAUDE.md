@@ -604,8 +604,8 @@ commandes ne fait que ralentir.
 ### Zaap pour tous les comptes (`main` uniquement)
 
 Bouton « portail » → fenêtre de recherche (`ui::zaap`) → chaque compte lancé
-tape `/zaap x,y` à tour de rôle (`win::chat::send_plan`), puis le premier
-compte de la liste revient devant. `/zaap` vérifié en jeu : téléporte sans
+tape `/zaap x,y` à tour de rôle (`win::chat::send_plan`), puis le chef de
+groupe revient devant. `/zaap` vérifié en jeu : téléporte sans
 confirmation, depuis n'importe quelle map.
 
 Option « Zaap : le chef de groupe active le suivi à l'arrivée »
@@ -643,7 +643,8 @@ les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
 dans l'onglet Multicompte, envoyée avec le scan code du layout) et
 `/travel` sur le chef de groupe seulement. Plan construit par `npcs::travel_plan` (pur, testé),
 exécuté par `win::chat::send_plan` qui prend des `Action` (taper, Ctrl+W,
-pause). ⚠ Ctrl+W bascule le suivi : s'il était déjà actif, il se coupe.
+pause). Ctrl+W bascule le suivi, mais le `/zaap` qui précède l'a déjà
+coupé : la touche l'active donc toujours.
 
 La liste (`src/npcs.rs`, 1 771 entrées) est générée **à la main** par
 `scripts/gen_npcs.py` depuis DofusDB. Les données du client n'ont **pas** la
@@ -850,3 +851,8 @@ qu'une.
 - `tray::format_status_label` : interpolation et changement de locale.
 - `ui::main_view::mix` : mélange gamma-correct (t=0/0.5/1, alpha,
   clamp).
+- `app::leader_first` : chef de groupe en tête, chef absent ignoré.
+- `zaaps` / `npcs` : recherche, commandes, plans de groupe
+  (`Zaap::plan`, `npcs::travel_plan`) avec et sans suivi du chef.
+- `favorites` : ordre, limite de 5, nettoyage des clés disparues.
+- `game_keys` : libellés, valeurs par défaut, lecture d'une config partielle.
