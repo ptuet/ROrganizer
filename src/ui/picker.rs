@@ -115,8 +115,22 @@ pub fn show(
                         let field = ui.add(
                             egui::TextEdit::singleline(query)
                                 .hint_text(texts.search_hint.as_str())
-                                .desired_width(f32::INFINITY),
+                                .desired_width(f32::INFINITY)
+                                // Room on the right for the clear "×".
+                                .margin(Margin { left: 4, right: 22, top: 2, bottom: 2 }),
                         );
+                        if !query.is_empty() {
+                            // Over the field, registered after it: wins the click.
+                            let rect = egui::Rect::from_center_size(
+                                egui::pos2(field.rect.right() - 12.0, field.rect.center().y),
+                                Vec2::splat(16.0),
+                            );
+                            let clear = ui.interact(rect, ui.id().with("clear_search"), Sense::click());
+                            paint_cross(ui, theme, rect, &clear);
+                            if clear.clicked() {
+                                query.clear();
+                            }
+                        }
                         if !field.has_focus() {
                             field.request_focus();
                         }
@@ -292,6 +306,13 @@ fn star(
 /// (Esc does the same).
 fn close_button(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::click());
+    paint_cross(ui, theme, rect, &resp);
+    resp
+}
+
+/// "×" in `rect`, highlighted while `resp` is hovered. Shared by the close
+/// button and the search field's clear button.
+fn paint_cross(ui: &egui::Ui, theme: Theme, rect: egui::Rect, resp: &egui::Response) {
     let color = if resp.hovered() {
         ui.painter().rect_filled(rect, 4.0, theme::hover_bg(theme));
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
@@ -304,5 +325,4 @@ fn close_button(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
     let stroke = Stroke::new(1.3, color);
     ui.painter().line_segment([c + Vec2::new(-d, -d), c + Vec2::new(d, d)], stroke);
     ui.painter().line_segment([c + Vec2::new(-d, d), c + Vec2::new(d, -d)], stroke);
-    resp
 }

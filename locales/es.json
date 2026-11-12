@@ -38,7 +38,7 @@
     "npc_follow_delay": "Pausa",
     "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que el jefe de grupo active el seguimiento. Súbelo si alguna cuenta no sigue: tu PC necesita más tiempo para cargar los mapas.",
     "zaap_follow_leader": "Zaap: el jefe de grupo activa el seguimiento al llegar",
-    "zaap_follow_leader_hint": "Marcado: cuando todas las cuentas se han teletransportado, el jefe de grupo activa el seguimiento (Ctrl+W por defecto), tras la misma pausa que para los PNJ. Si el seguimiento ya estaba activo, el atajo lo desactiva. Sin marcar: nada más tras el zaap."
+    "zaap_follow_leader_hint": "Marcado: cuando todas las cuentas se han teletransportado, el jefe de grupo activa el seguimiento (Ctrl+W por defecto), tras la misma pausa que para los PNJ. Sin marcar: nada más tras el zaap."
   },
   "tray": {
     "show": "Mostrar",
