@@ -34,10 +34,28 @@ pub struct StoredConfig {
     /// older JSONs → false: a normal window, also for existing users.
     #[serde(default)]
     pub always_on_top: bool,
+    /// NPC travel: everyone teleports and follows the first account (Ctrl+W),
+    /// the only one to walk. Off → each account walks by itself.
+    #[serde(default)]
+    pub npc_follow_leader: bool,
+    /// Pause before the leader's follow shortcut, in ms (0.5–3 s).
+    #[serde(default = "default_follow_delay")]
+    pub npc_follow_delay_ms: u32,
+    /// Keys of the game ROrganizer presses itself (open chat, follow the
+    /// leader). Missing → the game's defaults.
+    #[serde(default)]
+    pub game_keys: crate::game_keys::GameKeys,
+    /// Account that invites, walks and is followed; missing = first of the list.
+    #[serde(default)]
+    pub group_leader: Option<String>,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_follow_delay() -> u32 {
+    crate::npcs::FOLLOW_DELAY_DEFAULT_MS
 }
 
 /// `%APPDATA%\rorganizer\config.json` on Windows. Returns None on platforms
@@ -118,6 +136,10 @@ mod tests {
             minimize_to_taskbar: true,
             shortcuts_only_in_dofus: false,
             always_on_top: true,
+            npc_follow_leader: true,
+            npc_follow_delay_ms: 1200,
+            game_keys: crate::game_keys::GameKeys::default(),
+            group_leader: Some("Dowoip".into()),
         }
     }
 
@@ -167,6 +189,9 @@ mod tests {
         assert_eq!(loaded.minimize_to_taskbar, cfg.minimize_to_taskbar);
         assert_eq!(loaded.shortcuts_only_in_dofus, cfg.shortcuts_only_in_dofus);
         assert_eq!(loaded.always_on_top, cfg.always_on_top);
+        assert_eq!(loaded.npc_follow_leader, cfg.npc_follow_leader);
+        assert_eq!(loaded.npc_follow_delay_ms, cfg.npc_follow_delay_ms);
+        assert_eq!(loaded.group_leader, cfg.group_leader);
     }
 
     #[test]

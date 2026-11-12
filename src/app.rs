@@ -48,6 +48,20 @@ pub(crate) fn compute_conflicts(
         .collect()
 }
 
+/// `accounts` (list order) with the chosen leader moved to the front. A
+/// leader that is not launched, or none, keeps the list order: the first
+/// account leads.
+pub(crate) fn leader_first(
+    mut accounts: Vec<(SlotKey, isize)>,
+    leader: Option<&str>,
+) -> Vec<(SlotKey, isize)> {
+    if let Some(pos) = leader.and_then(|l| accounts.iter().position(|(s, _)| s == l)) {
+        let chosen = accounts.remove(pos);
+        accounts.insert(0, chosen);
+    }
+    accounts
+}
+
 /// Total order on BindingTarget for deterministic JSON serialization.
 /// Account names alphabetical first, then CycleNext (+ alt), then CyclePrev (+ alt).
 fn binding_target_sort_key(b: &BindingTarget) -> (u8, &str) {
@@ -142,11 +156,25 @@ pub struct App {
     shortcuts_only_in_dofus: bool,
     /// Window kept above every other one (option, off by default).
     always_on_top: bool,
+    /// NPC travel: follow the first account instead of each one walking.
+    npc_follow_leader: bool,
+    /// Pause before the leader's follow shortcut, in ms (setting).
+    npc_follow_delay_ms: u32,
+    /// Keys of the game pressed by the chat commands (settings).
+    game_keys: crate::game_keys::GameKeys,
+    /// Account that invites, walks and is followed; `None` = first of the list.
+    group_leader: Option<SlotKey>,
+    /// Game key being set in the capture modal; the settings reopen after.
+    game_key_capture: Option<crate::game_keys::GameKeyTarget>,
+    /// Tab shown in the settings modal.
+    settings_tab: ui::about::SettingsTab,
     /// Whether the "About" modal is currently displayed. Owned by App so
     /// the dynamic height logic can reserve space for the overlay card.
     show_about: bool,
     /// Zaap picker modal: `Some(query)` while open, with the search text.
     zaap_query: Option<String>,
+    /// NPC picker modal: `Some(query)` while open, with the search text.
+    npc_query: Option<String>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -186,6 +214,13 @@ impl App {
         // Off by default: the window is created normal (main.rs) and only
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
+        let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
+        let npc_follow_delay_ms = stored
+            .as_ref()
+            .map_or(crate::npcs::FOLLOW_DELAY_DEFAULT_MS, |c| c.npc_follow_delay_ms)
+            .clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
+        let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
+        let group_leader = stored.as_ref().and_then(|c| c.group_leader.clone());
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -262,8 +297,15 @@ impl App {
             minimize_to_taskbar,
             shortcuts_only_in_dofus,
             always_on_top,
+            npc_follow_leader,
+            npc_follow_delay_ms,
+            game_keys,
+            group_leader,
+            game_key_capture: None,
+            settings_tab: ui::about::SettingsTab::default(),
             show_about: false,
             zaap_query: None,
+            npc_query: None,
             about_icon,
             class_icons,
         }
@@ -449,26 +491,142 @@ impl App {
     /// From the first account of the list, sends `/invite <name>` for every
     /// other launched account.
     pub fn invite_group(&self, ctx: &egui::Context) {
-        let accounts = self.live_accounts();
+        let accounts = self.group_accounts();
         let Some(((_, leader), others)) = accounts.split_first() else {
             return;
         };
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
-        win::chat::send_plan(vec![(*leader, commands)], None, move || ctx.request_repaint());
+        let plan = vec![win::chat::Action::Type(*leader, commands)];
+        win::chat::send_plan(plan, self.game_keys, None, move || {
+            ctx.request_repaint()
+        });
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
     /// first account comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
-        let accounts = self.live_accounts();
-        let plan: Vec<win::chat::Step> = accounts
-            .iter()
-            .map(|(_, hwnd)| (*hwnd, vec![zaap.command()]))
+        let plan = self
+            .group_hwnds()
+            .into_iter()
+            .map(|h| win::chat::Action::Type(h, vec![zaap.command()]))
             .collect();
-        let first = accounts.first().map(|(_, hwnd)| *hwnd);
+        self.run_plan(ctx, plan);
+    }
+
+    /// Every launched account goes to the NPC: each one teleports and walks,
+    /// or (option) everyone teleports and follows the first account, the
+    /// only one to walk. The first account comes back to the front.
+    pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
+        let follow = self
+            .npc_follow_leader
+            .then(|| Duration::from_millis(u64::from(self.npc_follow_delay_ms)));
+        let plan = crate::npcs::travel_plan(npc, &self.group_hwnds(), follow);
+        self.run_plan(ctx, plan);
+    }
+
+    /// Runs a chat plan, then brings the group leader back to the front.
+    fn run_plan(&self, ctx: &egui::Context, plan: Vec<win::chat::Action>) {
+        let leader = self.group_hwnds().first().copied();
         let ctx = ctx.clone();
-        win::chat::send_plan(plan, first, move || ctx.request_repaint());
+        win::chat::send_plan(plan, self.game_keys, leader, move || {
+            ctx.request_repaint()
+        });
+    }
+
+    /// Launched accounts, group leader first, then the others in list order.
+    fn group_accounts(&self) -> Vec<(SlotKey, isize)> {
+        leader_first(self.live_accounts(), self.group_leader.as_deref())
+    }
+
+    /// HWNDs of `group_accounts`.
+    fn group_hwnds(&self) -> Vec<isize> {
+        self.group_accounts().into_iter().map(|(_, h)| h).collect()
+    }
+
+    /// Chosen group leader, `None` = the first account of the list.
+    pub fn group_leader(&self) -> Option<&str> {
+        self.group_leader.as_deref()
+    }
+
+    pub fn set_group_leader(&mut self, slot: Option<String>) {
+        if self.group_leader != slot {
+            self.group_leader = slot;
+            self.mark_dirty();
+        }
+    }
+
+    /// Names of the launched accounts, in list order (leader picker).
+    pub fn live_names(&self) -> Vec<SlotKey> {
+        self.live_accounts().into_iter().map(|(s, _)| s).collect()
+    }
+
+    pub fn game_keys(&self) -> crate::game_keys::GameKeys {
+        self.game_keys
+    }
+
+    pub fn settings_tab(&self) -> ui::about::SettingsTab {
+        self.settings_tab
+    }
+
+    pub fn set_settings_tab(&mut self, tab: ui::about::SettingsTab) {
+        self.settings_tab = tab;
+    }
+
+    pub fn game_key_capture(&self) -> Option<crate::game_keys::GameKeyTarget> {
+        self.game_key_capture
+    }
+
+    /// Opens the capture modal for a game key. The settings close meanwhile
+    /// (the capture modal is drawn under them) and reopen afterwards.
+    pub fn start_game_key_capture(&mut self, target: crate::game_keys::GameKeyTarget) {
+        self.show_about = false;
+        self.game_key_capture = Some(target);
+    }
+
+    pub fn finish_game_key_capture(&mut self, key: Option<crate::game_keys::GameKey>) {
+        if let (Some(target), Some(key)) = (self.game_key_capture, key) {
+            self.game_keys.set(target, key);
+            self.mark_dirty();
+        }
+        self.game_key_capture = None;
+        self.show_about = true;
+    }
+
+    pub fn npc_follow_delay_ms(&self) -> u32 {
+        self.npc_follow_delay_ms
+    }
+
+    pub fn set_npc_follow_delay_ms(&mut self, ms: u32) {
+        let ms = ms.clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
+        if self.npc_follow_delay_ms != ms {
+            self.npc_follow_delay_ms = ms;
+            self.mark_dirty();
+        }
+    }
+
+    pub fn npc_follow_leader(&self) -> bool {
+        self.npc_follow_leader
+    }
+
+    pub fn set_npc_follow_leader(&mut self, on: bool) {
+        if self.npc_follow_leader != on {
+            self.npc_follow_leader = on;
+            self.mark_dirty();
+        }
+    }
+
+    pub fn open_npc(&mut self) {
+        self.npc_query = Some(String::new());
+    }
+
+    pub fn close_npc(&mut self) {
+        self.npc_query = None;
+    }
+
+    /// Search text of the NPC picker, `None` while it is closed.
+    pub fn npc_query_mut(&mut self) -> Option<&mut String> {
+        self.npc_query.as_mut()
     }
 
     /// Launched accounts with their HWND, in the order shown in the app.
@@ -644,6 +802,10 @@ impl App {
             minimize_to_taskbar: self.minimize_to_taskbar,
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
             always_on_top: self.always_on_top,
+            npc_follow_leader: self.npc_follow_leader,
+            npc_follow_delay_ms: self.npc_follow_delay_ms,
+            game_keys: self.game_keys,
+            group_leader: self.group_leader.clone(),
         };
         let _ = config::save_atomic(path, &cfg);
     }
@@ -755,7 +917,7 @@ impl App {
         // the bottom — a clipped close button would look like a broken modal.
         const ABOUT_MIN: f32 = ui::about::ABOUT_CARD_HEIGHT;
         let mut desired = desired_content;
-        if self.show_about || self.zaap_query.is_some() {
+        if self.show_about || self.zaap_query.is_some() || self.npc_query.is_some() {
             desired = desired.max(ABOUT_MIN);
         }
         let desired = desired.clamp(280.0, 600.0);
@@ -811,6 +973,7 @@ impl eframe::App for App {
         ui::capture::draw(ctx, self);
         ui::about::draw(ctx, self);
         ui::zaap::draw(ctx, self);
+        ui::npc::draw(ctx, self);
 
         self.flush_if_due();
     }
@@ -830,6 +993,26 @@ mod tests {
 
     fn account(name: &str) -> BindingTarget {
         BindingTarget::Account(name.to_string())
+    }
+
+    fn accounts(names: &[&str]) -> Vec<(SlotKey, isize)> {
+        names.iter().enumerate().map(|(i, n)| (n.to_string(), i as isize)).collect()
+    }
+
+    fn names(list: &[(SlotKey, isize)]) -> Vec<&str> {
+        list.iter().map(|(s, _)| s.as_str()).collect()
+    }
+
+    #[test]
+    fn chosen_leader_moves_to_the_front() {
+        let out = leader_first(accounts(&["A", "B", "C"]), Some("C"));
+        assert_eq!(names(&out), ["C", "A", "B"]);
+    }
+
+    #[test]
+    fn no_leader_or_offline_leader_keeps_the_list_order() {
+        assert_eq!(names(&leader_first(accounts(&["A", "B"]), None)), ["A", "B"]);
+        assert_eq!(names(&leader_first(accounts(&["A", "B"]), Some("Z"))), ["A", "B"]);
     }
 
     #[test]

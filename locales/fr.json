@@ -19,7 +19,8 @@
     "tooltip_sort_taskbar": "Trier la barre des tâches dans cet ordre",
     "tooltip_invite_group": "Inviter tous les comptes dans le groupe du premier",
     "tooltip_about": "À propos",
-    "tooltip_zaap_group": "Envoyer tous les comptes au même zaap"
+    "tooltip_zaap_group": "Envoyer tous les comptes au même zaap",
+    "tooltip_npc_group": "Envoyer tous les comptes vers un PNJ"
   },
   "about": {
     "credit": "Développé par Loulouw avec l'aide de Claude",
@@ -31,7 +32,11 @@
     "minimize_to_taskbar": "Réduire dans la barre des tâches (pas la barre système)",
     "fork": "Fork maintenu par ptuet",
     "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan",
-    "always_on_top": "Toujours au premier plan"
+    "always_on_top": "Toujours au premier plan",
+    "npc_follow_leader": "Trajet vers un PNJ : suivre le chef de groupe",
+    "npc_follow_leader_hint": "Coché : tous les comptes se téléportent au zaap, puis le chef de groupe active le suivi (Ctrl+W par défaut) et est le seul à faire le trajet ; les autres le suivent. Décoché : chaque compte fait son propre trajet.",
+    "npc_follow_delay": "Pause",
+    "npc_follow_delay_hint": "Temps laissé aux cartes pour charger après le zaap, avant que le chef de groupe active le suivi. Augmente-la si certains comptes ne suivent pas : ton PC met plus de temps à charger les cartes."
   },
   "tray": {
     "show": "Afficher",
@@ -59,5 +64,37 @@
     "search_hint": "Rechercher un zaap…",
     "no_result": "Aucun zaap trouvé",
     "hint": "Clic ou Entrée : tous les comptes y vont · Échap pour fermer"
+  },
+  "npc": {
+    "title": "PNJ pour tous les comptes",
+    "search_hint": "Rechercher un PNJ ou une zone…",
+    "no_result": "Aucun PNJ trouvé",
+    "hint": "Clic ou Entrée : zaap le plus proche puis trajet · Échap pour fermer"
+  },
+  "settings": {
+    "tab_options": "Options",
+    "tab_about": "À propos",
+    "tab_group": "Multicompte",
+    "more_in_group": "Chef de groupe, trajet vers un PNJ et touches du jeu : dans l’onglet Multicompte."
+  },
+  "game_keys": {
+    "intro": "Les touches que ROrganizer presse dans Dofus pour l’invitation, le zaap et les PNJ. Mets les mêmes que dans les raccourcis du jeu.",
+    "open_chat": "Ouvrir le chat",
+    "follow_leader": "Suivre le chef de groupe",
+    "modal_title": "Touche du jeu",
+    "prompt": "Appuie sur la touche ou la combinaison utilisée dans Dofus",
+    "cancel_hint": "Échap pour annuler"
+  },
+  "group": {
+    "leader": "Chef de groupe",
+    "leader_first": "Premier de la liste",
+    "leader_offline": "%{name} (pas lancé)",
+    "keys": "Touches du jeu"
+  },
+  "help": {
+    "minimize_to_taskbar": "Coché : « – » et « Activer » réduisent la fenêtre dans la barre des tâches, en bas de l’écran, pour garder les boutons à un clic. Décoché : elle se cache dans la barre système, près de l’horloge.",
+    "shortcuts_only_in_dofus": "Coché : tes raccourcis ne font rien quand tu es dans une autre application (navigateur, Discord…) ; la touche y fonctionne normalement. Décoché : ils marchent partout.",
+    "always_on_top": "Coché : la fenêtre reste au-dessus de toutes les autres, même quand tu cliques sur Dofus. Décoché : elle passe derrière, comme une fenêtre normale.",
+    "group_leader": "Le compte qui invite les autres, que les autres suivent pendant un trajet vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
   }
 }

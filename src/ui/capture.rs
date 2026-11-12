@@ -3,10 +3,14 @@ use egui::{Color32, CornerRadius, Frame, Margin, Stroke};
 use rust_i18n::t;
 
 use crate::app::App;
+use crate::game_keys::{GameKey, GameKeyTarget};
 use crate::theme::{self, Theme};
 use crate::triggers::{event_to_vk, BindingTarget, MouseBtn, Trigger, WheelDir};
 
 pub fn draw(ctx: &egui::Context, app: &mut App) {
+    if let Some(target) = app.game_key_capture() {
+        return draw_game_key(ctx, app, target);
+    }
     let Some(target) = app.capture_state().cloned() else {
         return;
     };
@@ -26,6 +30,36 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
         return;
     }
 
+    let target_label = match &target {
+        BindingTarget::Account(slot) => {
+            t!("binding.for_account", name = slot.as_str()).to_string()
+        }
+        BindingTarget::CycleNext => t!("cycle.next").to_string(),
+        BindingTarget::CyclePrev => t!("cycle.prev").to_string(),
+        BindingTarget::CycleNextAlt => format!("{} (2)", t!("cycle.next")),
+        BindingTarget::CyclePrevAlt => format!("{} (2)", t!("cycle.prev")),
+    };
+
+    card(
+        ctx,
+        theme,
+        &t!("binding.modal_title"),
+        &target_label,
+        &t!("binding.prompt"),
+        &t!("binding.cancel_hint"),
+    );
+}
+
+/// Backdrop + centred card asking for a key. Shared by the shortcut and the
+/// game key captures.
+fn card(
+    ctx: &egui::Context,
+    theme: Theme,
+    title: &str,
+    target_label: &str,
+    prompt: &str,
+    cancel_hint: &str,
+) {
     // Render the modal overlay (semi-transparent backdrop + centered card).
     let screen_rect = ctx.content_rect();
     let backdrop = match theme {
@@ -39,16 +73,6 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     let card_border = match theme {
         Theme::Dark => theme::BORDER_STRONG_DARK,
         Theme::Light => theme::BORDER_STRONG_LIGHT,
-    };
-
-    let target_label = match &target {
-        BindingTarget::Account(slot) => {
-            t!("binding.for_account", name = slot.as_str()).to_string()
-        }
-        BindingTarget::CycleNext => t!("cycle.next").to_string(),
-        BindingTarget::CyclePrev => t!("cycle.prev").to_string(),
-        BindingTarget::CycleNextAlt => format!("{} (2)", t!("cycle.next")),
-        BindingTarget::CyclePrevAlt => format!("{} (2)", t!("cycle.prev")),
     };
 
     egui::Area::new(egui::Id::new("capture_overlay"))
@@ -70,7 +94,7 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                         ui.set_min_size(card_size - egui::vec2(36.0, 32.0));
                         ui.vertical_centered(|ui| {
                             ui.label(
-                                egui::RichText::new(t!("binding.modal_title").to_uppercase())
+                                egui::RichText::new(title.to_uppercase())
                                     .size(11.0)
                                     .color(theme::text_tertiary(theme)),
                             );
@@ -93,13 +117,13 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                             );
                             ui.add_space(10.0);
                             ui.label(
-                                egui::RichText::new(t!("binding.prompt"))
+                                egui::RichText::new(prompt)
                                     .size(11.0)
                                     .color(theme::text_secondary(theme)),
                             );
                             ui.add_space(4.0);
                             ui.label(
-                                egui::RichText::new(t!("binding.cancel_hint"))
+                                egui::RichText::new(cancel_hint)
                                     .size(10.0)
                                     .color(theme::text_tertiary(theme)),
                             );
@@ -107,6 +131,49 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                     });
             });
         });
+}
+
+/// Capture of a key of the game (open chat, follow the leader): a keyboard
+/// key with Ctrl / Shift / Alt, no mouse. Esc cancels and keeps the key.
+fn draw_game_key(ctx: &egui::Context, app: &mut App, target: GameKeyTarget) {
+    if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+        app.finish_game_key_capture(None);
+        return;
+    }
+    if let Some(key) = ctx.input(|i| extract_game_key(&i.events)) {
+        app.finish_game_key_capture(Some(key));
+        return;
+    }
+    let target_label = match target {
+        GameKeyTarget::OpenChat => t!("game_keys.open_chat"),
+        GameKeyTarget::FollowLeader => t!("game_keys.follow_leader"),
+    };
+    card(
+        ctx,
+        app.theme(),
+        &t!("game_keys.modal_title"),
+        &target_label,
+        &t!("game_keys.prompt"),
+        &t!("game_keys.cancel_hint"),
+    );
+}
+
+/// First key press of the frame with its modifiers. A modifier alone sends
+/// no key event, so "Ctrl" waits for the key that goes with it.
+fn extract_game_key(events: &[egui::Event]) -> Option<GameKey> {
+    events.iter().find_map(|ev| match ev {
+        egui::Event::Key { key, physical_key, pressed: true, repeat: false, modifiers }
+            if *key != egui::Key::Escape =>
+        {
+            event_to_vk(*key, *physical_key).map(|vk| GameKey {
+                vk,
+                ctrl: modifiers.ctrl,
+                shift: modifiers.shift,
+                alt: modifiers.alt,
+            })
+        }
+        _ => None,
+    })
 }
 
 fn extract_first_trigger(events: &[egui::Event]) -> Option<Trigger> {

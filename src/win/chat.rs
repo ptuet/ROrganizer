@@ -12,7 +12,8 @@
 //!
 //! In each window the chat is opened once, every command is pasted and sent
 //! in a row, and Escape closes it at the end:
-//! Space → (Ctrl+V → Enter) × N → Escape.
+//! open chat (Space by default) → (Ctrl+V → Enter) × N → Escape. The keys of
+//! the game (open chat, follow the leader) are settings: `game_keys`.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
@@ -27,17 +28,17 @@ use windows::Win32::System::Memory::{
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     MapVirtualKeyW, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VIRTUAL_KEY, VK_CONTROL, VK_ESCAPE, VK_RETURN, VK_SPACE,
+    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VIRTUAL_KEY, VK_CONTROL, VK_ESCAPE, VK_RETURN,
 };
 
 use super::focus::{focus_window, foreground_window};
+use crate::game_keys::{GameKey, GameKeys};
 
 const CF_UNICODETEXT: u32 = 13;
 const VK_V: VIRTUAL_KEY = VIRTUAL_KEY(0x56);
+const VK_SHIFT: VIRTUAL_KEY = VIRTUAL_KEY(0x10);
+const VK_ALT: VIRTUAL_KEY = VIRTUAL_KEY(0x12);
 
-/// Key that opens the chat. Dofus lets players rebind it; Space is what the
-/// author's client uses (Enter did nothing there).
-const VK_OPEN_CHAT: VIRTUAL_KEY = VK_SPACE;
 /// How long each key stays down.
 const KEY_HOLD: Duration = Duration::from_millis(30);
 /// After opening the chat, and between paste and send: the input needs a
@@ -60,21 +61,36 @@ pub fn is_busy() -> bool {
     SENDING.load(Ordering::Acquire)
 }
 
-/// Commands to type in one window.
-pub type Step = (isize, Vec<String>);
+/// One step of a plan.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Action {
+    /// Commands typed in the chat of this window.
+    Type(isize, Vec<String>),
+    /// "Follow the group leader" shortcut (Ctrl+W, the game's default)
+    /// pressed in this window.
+    FollowLeader(isize),
+    /// Wait, e.g. for maps to load after a teleport.
+    Pause(Duration),
+}
 
-/// For each step in order, focuses the window and sends its commands through
-/// the chat, on a background thread; then brings `finish_on` to the front.
-/// The global shortcuts are paused meanwhile, so the injected keys can't
-/// trigger a binding. Stops everything if a window won't come to the front
-/// or the user brings another one forward. The clipboard's text is restored
-/// at the end. `on_done` runs once finished (the UI uses it to repaint).
+/// Runs the actions in order on a background thread, then brings
+/// `finish_on` to the front. The global shortcuts are paused meanwhile, so
+/// the injected keys can't trigger a binding. Stops everything if a window
+/// won't come to the front or the user brings another one forward. The
+/// clipboard's text is restored at the end. `on_done` runs once finished
+/// (the UI uses it to repaint).
 pub fn send_plan(
-    plan: Vec<Step>,
+    plan: Vec<Action>,
+    keys: GameKeys,
     finish_on: Option<isize>,
     on_done: impl FnOnce() + Send + 'static,
 ) {
-    if plan.iter().all(|(_, cmds)| cmds.is_empty())
+    let has_input = plan.iter().any(|a| match a {
+        Action::Type(_, cmds) => !cmds.is_empty(),
+        Action::FollowLeader(_) => true,
+        Action::Pause(_) => false,
+    });
+    if !has_input
         || SENDING
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .is_err()
@@ -84,7 +100,14 @@ pub fn send_plan(
     thread::spawn(move || {
         crate::hooks::set_paused(true);
         let saved = read_clipboard_text();
-        let completed = plan.iter().all(|(hwnd, cmds)| run(*hwnd, cmds));
+        let completed = plan.iter().all(|action| match action {
+            Action::Type(hwnd, cmds) => run(*hwnd, cmds, keys.open_chat),
+            Action::FollowLeader(hwnd) => follow_leader(*hwnd, keys.follow_leader),
+            Action::Pause(d) => {
+                thread::sleep(*d);
+                true
+            }
+        });
         if completed && let Some(hwnd) = finish_on {
             focus_window(hwnd);
         }
@@ -102,21 +125,15 @@ pub fn send_plan(
 
 /// Types `commands` in `target`. False if it had to stop (window not in
 /// front), so the caller doesn't go on with the next windows.
-fn run(target: isize, commands: &[String]) -> bool {
+fn run(target: isize, commands: &[String], open_chat: GameKey) -> bool {
     if commands.is_empty() {
         return true;
     }
-    focus_window(target);
-    let start = Instant::now();
-    while foreground_window() != Some(target) {
-        if start.elapsed() > FOCUS_TIMEOUT {
-            return false;
-        }
-        thread::sleep(Duration::from_millis(25));
+    if !bring_to_front(target) {
+        return false;
     }
-    thread::sleep(FOCUS_SETTLE);
 
-    tap(VK_OPEN_CHAT);
+    tap_key(open_chat);
     thread::sleep(STEP_DELAY);
     for cmd in commands {
         // The user switched window: stop rather than type into it.
@@ -136,6 +153,52 @@ fn run(target: isize, commands: &[String]) -> bool {
     }
     tap(VK_ESCAPE);
     true
+}
+
+/// Focuses `target` and waits until it is really in front. False if it
+/// won't come.
+fn bring_to_front(target: isize) -> bool {
+    focus_window(target);
+    let start = Instant::now();
+    while foreground_window() != Some(target) {
+        if start.elapsed() > FOCUS_TIMEOUT {
+            return false;
+        }
+        thread::sleep(Duration::from_millis(25));
+    }
+    thread::sleep(FOCUS_SETTLE);
+    true
+}
+
+/// Presses the "follow the group leader" shortcut (Ctrl+W by default) in
+/// `target`.
+fn follow_leader(target: isize, key: GameKey) -> bool {
+    if !bring_to_front(target) {
+        return false;
+    }
+    tap_key(key);
+    thread::sleep(AFTER_SEND);
+    true
+}
+
+/// Presses a game key with its modifiers: modifiers down, key tapped,
+/// modifiers up in reverse order. Each key goes with its scan code on the
+/// user's layout, as if pressed by hand (the key labelled W, on AZERTY too).
+fn tap_key(key: GameKey) {
+    let mods: Vec<VIRTUAL_KEY> = [(key.ctrl, VK_CONTROL), (key.shift, VK_SHIFT), (key.alt, VK_ALT)]
+        .into_iter()
+        .filter_map(|(on, vk)| on.then_some(vk))
+        .collect();
+    for &m in &mods {
+        press(m);
+    }
+    if !mods.is_empty() {
+        thread::sleep(KEY_HOLD);
+    }
+    tap(VIRTUAL_KEY(key.vk as u16));
+    for &m in mods.iter().rev() {
+        release(m);
+    }
 }
 
 fn key_event(vk: VIRTUAL_KEY, up: bool) -> INPUT {
