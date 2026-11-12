@@ -98,11 +98,18 @@ pub fn show(
                     .inner_margin(Margin::symmetric(14, 14))
                     .show(ui, |ui| {
                         ui.set_min_size(CARD_SIZE - Vec2::splat(28.0));
-                        ui.label(
-                            egui::RichText::new(texts.title.to_uppercase())
-                                .size(11.0)
-                                .color(theme::text_tertiary(theme)),
-                        );
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                egui::RichText::new(texts.title.to_uppercase())
+                                    .size(11.0)
+                                    .color(theme::text_tertiary(theme)),
+                            );
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                if close_button(ui, theme).clicked() {
+                                    outcome = Outcome::Close;
+                                }
+                            });
+                        });
                         ui.add_space(8.0);
 
                         let field = ui.add(
@@ -279,4 +286,23 @@ fn star(
         }
     }
     painter.add(egui::Shape::closed_line(points, Stroke::new(1.0, outline)));
+}
+
+/// Small "×" in the top-right corner of the card, to close with the mouse
+/// (Esc does the same).
+fn close_button(ui: &mut egui::Ui, theme: Theme) -> egui::Response {
+    let (rect, resp) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::click());
+    let color = if resp.hovered() {
+        ui.painter().rect_filled(rect, 4.0, theme::hover_bg(theme));
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        theme::text_primary(theme)
+    } else {
+        theme::text_tertiary(theme)
+    };
+    let c = rect.center();
+    let d = 3.5;
+    let stroke = Stroke::new(1.3, color);
+    ui.painter().line_segment([c + Vec2::new(-d, -d), c + Vec2::new(d, d)], stroke);
+    ui.painter().line_segment([c + Vec2::new(-d, d), c + Vec2::new(d, -d)], stroke);
+    resp
 }
