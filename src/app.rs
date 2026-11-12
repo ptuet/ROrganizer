@@ -219,8 +219,8 @@ impl App {
         // Off by default: the window is created normal (main.rs) and only
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
-        let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
-        let zaap_follow_leader = stored.as_ref().is_some_and(|c| c.zaap_follow_leader);
+        let npc_follow_leader = stored.as_ref().is_none_or(|c| c.npc_follow_leader);
+        let zaap_follow_leader = stored.as_ref().is_none_or(|c| c.zaap_follow_leader);
         let npc_follow_delay_ms = stored
             .as_ref()
             .map_or(crate::npcs::FOLLOW_DELAY_DEFAULT_MS, |c| c.npc_follow_delay_ms)

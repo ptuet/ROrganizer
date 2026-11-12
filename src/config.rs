@@ -34,13 +34,13 @@ pub struct StoredConfig {
     /// older JSONs → false: a normal window, also for existing users.
     #[serde(default)]
     pub always_on_top: bool,
-    /// NPC travel: everyone teleports and follows the first account (Ctrl+W),
-    /// the only one to walk. Off → each account walks by itself.
-    #[serde(default)]
+    /// NPC travel: everyone teleports and follows the group leader (Ctrl+W),
+    /// the only one to walk. Off → each account walks by itself. Missing → on.
+    #[serde(default = "default_true")]
     pub npc_follow_leader: bool,
     /// Group zaap: once everyone has teleported, the leader turns on group
-    /// follow. Off → nothing after the teleport.
-    #[serde(default)]
+    /// follow. Off → nothing after the teleport. Missing → on.
+    #[serde(default = "default_true")]
     pub zaap_follow_leader: bool,
     /// Pause before the leader's follow shortcut, in ms (0.5–3 s).
     #[serde(default = "default_follow_delay")]
@@ -208,6 +208,20 @@ mod tests {
         assert_eq!(loaded.group_leader, cfg.group_leader);
         assert_eq!(loaded.favorite_zaaps, cfg.favorite_zaaps);
         assert_eq!(loaded.favorite_npcs, cfg.favorite_npcs);
+    }
+
+    #[test]
+    fn config_without_follow_fields_follows_the_leader() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        let obj = json.as_object_mut().unwrap();
+        obj.remove("npc_follow_leader");
+        obj.remove("zaap_follow_leader");
+        std::fs::write(&path, json.to_string()).unwrap();
+        let loaded = load(&path).expect("old config loads");
+        assert!(loaded.npc_follow_leader);
+        assert!(loaded.zaap_follow_leader);
     }
 
     #[test]

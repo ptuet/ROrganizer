@@ -609,7 +609,7 @@ compte de la liste revient devant. `/zaap` vérifié en jeu : téléporte sans
 confirmation, depuis n'importe quelle map.
 
 Option « Zaap : le chef de groupe active le suivi à l'arrivée »
-(`zaap_follow_leader`, désactivée par défaut) : après les `/zaap`, même
+(`zaap_follow_leader`, activée par défaut) : après les `/zaap`, même
 pause que pour les PNJ (`npc_follow_delay_ms`, curseur partagé) puis la
 touche « suivre le chef » sur le chef de groupe. Plan pur et testé :
 `Zaap::plan`. La touche bascule le suivi, mais `/zaap` le coupe déjà
@@ -636,7 +636,7 @@ Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant comm
 commandes enchaînées par `;`, Dofus 3.7+).
 
 Option « Trajet vers un PNJ : suivre le chef de groupe » (`npc_follow_leader`,
-désactivée par défaut) : tous font `/zaap`, pause réglable
+activée par défaut) : tous font `/zaap`, pause réglable
 (`npc_follow_delay_ms`, curseur 0,5–3 s, 0,5 s par défaut — validé en jeu ;
 2,5 s était trop long ; un PC lent peut avoir besoin de plus pour charger
 les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
