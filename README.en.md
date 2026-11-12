@@ -25,12 +25,12 @@
 > [ptuet](https://github.com/ptuet). It fixes a few in-game issues (AZERTY
 > keys such as `²`, a cycle that follows the window you picked with the
 > mouse) and adds multi-account features: a second shortcut for
-> next / previous, taskbar sorting, minimizing to the taskbar, and two
+> next / previous, taskbar sorting, minimizing to the taskbar, and three
 > buttons that **send chat commands to the game** — invite every account
-> into a group, send every account to the same zaap.
+> into a group, send every account to the same zaap or to an NPC.
 >
 > Two builds are published on the [Releases page](https://github.com/ptuet/ROrganizer/releases):
-> `ROrganizer-<version>` with those two buttons, and
+> `ROrganizer-<version>` with those buttons, and
 > `ROrganizer-<version>-vanilla`, which **never** sends anything to the
 > game. The full, up-to-date description is in the
 > [French README](README.md); the text below is the original author's
