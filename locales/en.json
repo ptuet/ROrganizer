@@ -17,10 +17,11 @@
     "tooltip_lang": "Language",
     "tooltip_refresh": "Refresh",
     "tooltip_sort_taskbar": "Sort the taskbar in this order",
-    "tooltip_invite_group": "Invite every account into the first one's group",
+    "tooltip_invite_group": "Invite every account into the group",
     "tooltip_about": "About",
     "tooltip_zaap_group": "Send every account to the same zaap",
-    "tooltip_npc_group": "Send every account to an NPC"
+    "tooltip_npc_group": "Send every account to an NPC",
+    "tooltip_minimize_taskbar": "Minimize to the taskbar"
   },
   "about": {
     "credit": "Built by Loulouw with the help of Claude",
@@ -46,7 +47,8 @@
     "activate": "Activate",
     "deactivate": "Deactivate",
     "status_active": "Active · %{count} accounts",
-    "status_inactive": "Inactive"
+    "status_inactive": "Inactive",
+    "status_active_one": "Active · 1 account"
   },
   "binding": {
     "set": "set",
@@ -77,7 +79,7 @@
     "tab_options": "Options",
     "tab_about": "About",
     "tab_group": "Multi-account",
-    "more_in_group": "Group leader, NPC travel and game keys: in the Multi-account tab."
+    "more_in_group": "Group leader, follow after a zaap or to an NPC, game keys: in the Multi-account tab."
   },
   "game_keys": {
     "intro": "The keys ROrganizer presses in Dofus for the invite, zaap and NPC buttons. Use the same as in the game’s shortcuts.",
@@ -97,9 +99,9 @@
     "minimize_to_taskbar": "Checked: “–” and “Activate” minimize the window to the taskbar, at the bottom of the screen, to keep the buttons one click away. Unchecked: it hides in the system tray, near the clock.",
     "shortcuts_only_in_dofus": "Checked: your shortcuts do nothing while you are in another application (browser, Discord…); the key works normally there. Unchecked: they work everywhere.",
     "always_on_top": "Checked: the window stays above all the others, even when you click Dofus. Unchecked: it goes behind, like a normal window.",
-    "group_leader": "The account that invites the others, that the others follow on an NPC trip, and that the app comes back to after a group command. By default, the first of the list."
+    "group_leader": "The account that invites the others, that the others follow after a zaap or to an NPC, and that the app comes back to after a group command. By default, the first of the list."
   },
   "favorites": {
-    "hint": "Star: favourite, at the top of the list (%{max} max)"
+    "hint": "Star: favorite, at the top of the list (%{max} max)"
   }
 }

@@ -247,7 +247,9 @@ fn build_icon(active: bool) -> Result<Icon, tray_icon::BadIcon> {
 /// `TrayController` so it can be unit-tested without instantiating the
 /// underlying Win32 tray icon.
 fn format_status_label(active: bool, count: usize) -> String {
-    if active {
+    if active && count == 1 {
+        rust_i18n::t!("tray.status_active_one").to_string()
+    } else if active {
         rust_i18n::t!("tray.status_active", count = count.to_string()).to_string()
     } else {
         rust_i18n::t!("tray.status_inactive").to_string()

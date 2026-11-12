@@ -156,7 +156,7 @@ pub struct App {
     shortcuts_only_in_dofus: bool,
     /// Window kept above every other one (option, off by default).
     always_on_top: bool,
-    /// NPC travel: follow the first account instead of each one walking.
+    /// NPC travel: follow the group leader instead of each one walking.
     npc_follow_leader: bool,
     /// Group zaap: the leader turns on follow at the end (setting).
     zaap_follow_leader: bool,
@@ -516,7 +516,7 @@ impl App {
         win::taskbar::reorder_taskbar(hwnds, move || ctx.request_repaint());
     }
 
-    /// From the first account of the list, sends `/invite <name>` for every
+    /// From the group leader, sends `/invite <name>` for every
     /// other launched account.
     pub fn invite_group(&self, ctx: &egui::Context) {
         let accounts = self.group_accounts();
@@ -532,7 +532,7 @@ impl App {
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
-    /// first account comes back to the front.
+    /// group leader comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
         let follow = self
             .zaap_follow_leader
@@ -542,8 +542,8 @@ impl App {
     }
 
     /// Every launched account goes to the NPC: each one teleports and walks,
-    /// or (option) everyone teleports and follows the first account, the
-    /// only one to walk. The first account comes back to the front.
+    /// or (option) everyone teleports and follows the group leader, the
+    /// only one to walk. The leader comes back to the front.
     pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
         let follow = self
             .npc_follow_leader

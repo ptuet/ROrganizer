@@ -17,10 +17,11 @@
     "tooltip_lang": "Langue",
     "tooltip_refresh": "Rafraîchir",
     "tooltip_sort_taskbar": "Trier la barre des tâches dans cet ordre",
-    "tooltip_invite_group": "Inviter tous les comptes dans le groupe du premier",
+    "tooltip_invite_group": "Inviter tous les comptes dans le groupe",
     "tooltip_about": "À propos",
     "tooltip_zaap_group": "Envoyer tous les comptes au même zaap",
-    "tooltip_npc_group": "Envoyer tous les comptes vers un PNJ"
+    "tooltip_npc_group": "Envoyer tous les comptes vers un PNJ",
+    "tooltip_minimize_taskbar": "Réduire dans la barre des tâches"
   },
   "about": {
     "credit": "Développé par Loulouw avec l'aide de Claude",
@@ -46,11 +47,12 @@
     "activate": "Activer",
     "deactivate": "Désactiver",
     "status_active": "Actif · %{count} comptes",
-    "status_inactive": "Inactif"
+    "status_inactive": "Inactif",
+    "status_active_one": "Actif · 1 compte"
   },
   "binding": {
     "set": "définir",
-    "prompt": "Appuyez sur une touche ou un bouton de souris",
+    "prompt": "Appuie sur une touche ou un bouton de souris",
     "cancel_hint": "Échap pour annuler",
     "modal_title": "Définir un raccourci",
     "for_account": "pour %{name}",
@@ -77,7 +79,7 @@
     "tab_options": "Options",
     "tab_about": "À propos",
     "tab_group": "Multicompte",
-    "more_in_group": "Chef de groupe, trajet vers un PNJ et touches du jeu : dans l’onglet Multicompte."
+    "more_in_group": "Chef de groupe, suivi après un zaap ou vers un PNJ, touches du jeu : dans l’onglet Multicompte."
   },
   "game_keys": {
     "intro": "Les touches que ROrganizer presse dans Dofus pour l’invitation, le zaap et les PNJ. Mets les mêmes que dans les raccourcis du jeu.",
@@ -97,7 +99,7 @@
     "minimize_to_taskbar": "Coché : « – » et « Activer » réduisent la fenêtre dans la barre des tâches, en bas de l’écran, pour garder les boutons à un clic. Décoché : elle se cache dans la barre système, près de l’horloge.",
     "shortcuts_only_in_dofus": "Coché : tes raccourcis ne font rien quand tu es dans une autre application (navigateur, Discord…) ; la touche y fonctionne normalement. Décoché : ils marchent partout.",
     "always_on_top": "Coché : la fenêtre reste au-dessus de toutes les autres, même quand tu cliques sur Dofus. Décoché : elle passe derrière, comme une fenêtre normale.",
-    "group_leader": "Le compte qui invite les autres, que les autres suivent pendant un trajet vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
+    "group_leader": "Le compte qui invite les autres, que les autres suivent après un zaap ou vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
   },
   "favorites": {
     "hint": "Étoile : favori, en haut de la liste (%{max} max)"
