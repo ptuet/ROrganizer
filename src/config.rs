@@ -48,6 +48,12 @@ pub struct StoredConfig {
     /// Account that invites, walks and is followed; missing = first of the list.
     #[serde(default)]
     pub group_leader: Option<String>,
+    /// Starred zaaps, shown first in the picker (`favorites`).
+    #[serde(default)]
+    pub favorite_zaaps: Vec<String>,
+    /// Starred NPCs, shown first in the picker (`favorites`).
+    #[serde(default)]
+    pub favorite_npcs: Vec<String>,
 }
 
 fn default_true() -> bool {
@@ -140,6 +146,8 @@ mod tests {
             npc_follow_delay_ms: 1200,
             game_keys: crate::game_keys::GameKeys::default(),
             group_leader: Some("Dowoip".into()),
+            favorite_zaaps: vec!["Port de Madrestam [7,-4]".into()],
+            favorite_npcs: vec!["Ganymède · Ganymède [1,2]".into()],
         }
     }
 
@@ -192,6 +200,8 @@ mod tests {
         assert_eq!(loaded.npc_follow_leader, cfg.npc_follow_leader);
         assert_eq!(loaded.npc_follow_delay_ms, cfg.npc_follow_delay_ms);
         assert_eq!(loaded.group_leader, cfg.group_leader);
+        assert_eq!(loaded.favorite_zaaps, cfg.favorite_zaaps);
+        assert_eq!(loaded.favorite_npcs, cfg.favorite_npcs);
     }
 
     #[test]

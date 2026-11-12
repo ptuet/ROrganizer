@@ -23,6 +23,11 @@ impl Zaap {
     pub fn command(&self) -> String {
         format!("/zaap {},{}", self.x, self.y)
     }
+
+    /// Key of this zaap in the favourites (`config.json`).
+    pub fn favorite_key(&self) -> String {
+        format!("{} [{},{}]", self.name, self.x, self.y)
+    }
 }
 
 /// Zaaps whose territory or region contains every word of `query`, ignoring

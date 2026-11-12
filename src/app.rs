@@ -175,6 +175,9 @@ pub struct App {
     zaap_query: Option<String>,
     /// NPC picker modal: `Some(query)` while open, with the search text.
     npc_query: Option<String>,
+    /// Starred zaaps and NPCs, keys in starred order (`favorites`).
+    favorite_zaaps: Vec<String>,
+    favorite_npcs: Vec<String>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -221,6 +224,14 @@ impl App {
             .clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
         let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
         let group_leader = stored.as_ref().and_then(|c| c.group_leader.clone());
+        let favorite_zaaps = crate::favorites::clean(
+            stored.as_ref().map(|c| c.favorite_zaaps.clone()).unwrap_or_default(),
+            |k| crate::zaaps::ZAAPS.iter().any(|z| z.favorite_key() == k),
+        );
+        let favorite_npcs = crate::favorites::clean(
+            stored.as_ref().map(|c| c.favorite_npcs.clone()).unwrap_or_default(),
+            |k| crate::npcs::NPCS.iter().any(|n| n.favorite_key() == k),
+        );
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -306,6 +317,8 @@ impl App {
             show_about: false,
             zaap_query: None,
             npc_query: None,
+            favorite_zaaps,
+            favorite_npcs,
             about_icon,
             class_icons,
         }
@@ -346,6 +359,17 @@ impl App {
     /// Search text of the zaap picker, `None` while it is closed.
     pub fn zaap_query_mut(&mut self) -> Option<&mut String> {
         self.zaap_query.as_mut()
+    }
+
+    pub fn favorite_zaaps(&self) -> &[String] {
+        &self.favorite_zaaps
+    }
+
+    /// Stars or unstars a zaap (nothing when 5 are already starred).
+    pub fn toggle_favorite_zaap(&mut self, key: String) {
+        if crate::favorites::toggle(&mut self.favorite_zaaps, key) {
+            self.mark_dirty();
+        }
     }
 
     /// Parent of the persisted config file, used by the About modal to
@@ -629,6 +653,17 @@ impl App {
         self.npc_query.as_mut()
     }
 
+    pub fn favorite_npcs(&self) -> &[String] {
+        &self.favorite_npcs
+    }
+
+    /// Stars or unstars an NPC (nothing when 5 are already starred).
+    pub fn toggle_favorite_npc(&mut self, key: String) {
+        if crate::favorites::toggle(&mut self.favorite_npcs, key) {
+            self.mark_dirty();
+        }
+    }
+
     /// Launched accounts with their HWND, in the order shown in the app.
     fn live_accounts(&self) -> Vec<(SlotKey, isize)> {
         let snap = self.windows.load();
@@ -806,6 +841,8 @@ impl App {
             npc_follow_delay_ms: self.npc_follow_delay_ms,
             game_keys: self.game_keys,
             group_leader: self.group_leader.clone(),
+            favorite_zaaps: self.favorite_zaaps.clone(),
+            favorite_npcs: self.favorite_npcs.clone(),
         };
         let _ = config::save_atomic(path, &cfg);
     }

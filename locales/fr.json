@@ -96,5 +96,8 @@
     "shortcuts_only_in_dofus": "Coché : tes raccourcis ne font rien quand tu es dans une autre application (navigateur, Discord…) ; la touche y fonctionne normalement. Décoché : ils marchent partout.",
     "always_on_top": "Coché : la fenêtre reste au-dessus de toutes les autres, même quand tu cliques sur Dofus. Décoché : elle passe derrière, comme une fenêtre normale.",
     "group_leader": "Le compte qui invite les autres, que les autres suivent pendant un trajet vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
+  },
+  "favorites": {
+    "hint": "Étoile : favori, en haut de la liste (%{max} max)"
   }
 }

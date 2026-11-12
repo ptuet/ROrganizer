@@ -656,6 +656,18 @@ Projets similaires vus : Huzounet (outil PNJ, données non publiques) et
 travel-dofus (GitHub, **sans licence** : données non réutilisées, seule
 l'idée des objectifs de quêtes a été reprise).
 
+### Favoris zaaps et PNJ (`main` uniquement)
+
+Étoile à gauche de chaque ligne des deux pickers : 5 favoris max par liste
+(`favorites::MAX`), affichés en tête dans l'ordre où ils ont été ajoutés,
+séparés du reste par un trait ; Entrée sur une recherche vide prend donc le
+1ᵉʳ favori. Stockés dans `config.json` (`favorite_zaaps`, `favorite_npcs`)
+par une clé lisible nom + zone + coordonnées : les tables DofusDB n'ont pas
+d'identifiant stable. Une clé absente de la table (liste régénérée, config
+éditée à la main) est retirée au chargement (`favorites::clean`). L'étoile
+est dessinée à la main (`picker::star`) : les polices par défaut n'ont pas
+de glyphe étoile.
+
 ### Branches `main` / `vanilla`
 
 `vanilla` = version sans aucune interaction avec le client Dofus (pas de

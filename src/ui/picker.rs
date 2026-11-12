@@ -1,6 +1,7 @@
 //! Search modal shared by the zaap and NPC pickers: a search field always
 //! focused, the filtered list below, click (or Enter for the first match)
-//! to pick, Esc to close.
+//! to pick, Esc to close. The star on the left of a row stars it: starred
+//! rows come first (sorted by the caller), with a line under them.
 //!
 //! Same backdrop + centred card pattern as `capture::draw` / `about::draw`.
 //! The list is virtualised (`ScrollArea::show_rows`): only visible rows are
@@ -21,6 +22,8 @@ pub struct Texts {
     pub search_hint: String,
     pub no_result: String,
     pub hint: String,
+    /// Second hint line, about the star.
+    pub star_hint: String,
 }
 
 /// One line: label on the left (detail under it, if any), coordinates on
@@ -29,15 +32,20 @@ pub struct Row<'a> {
     pub label: &'a str,
     pub detail: &'a str,
     pub coords: (i32, i32),
+    /// Starred: the caller puts these rows first.
+    pub favorite: bool,
 }
 
 pub enum Outcome {
     Open,
     Close,
     Picked(usize),
+    /// The star of this row was clicked.
+    ToggleFavorite(usize),
 }
 
 /// Draws the picker over the whole window. `query` is edited in place.
+/// `full`: the favourites are full, unstarred rows can't be starred.
 pub fn show(
     ctx: &egui::Context,
     theme: Theme,
@@ -45,6 +53,7 @@ pub fn show(
     texts: &Texts,
     query: &mut String,
     rows: &[Row<'_>],
+    full: bool,
 ) -> Outcome {
     if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
         return Outcome::Close;
@@ -112,15 +121,27 @@ pub fn show(
                                     .size(12.0)
                                     .color(theme::text_tertiary(theme)),
                             );
-                            ui.add_space(CARD_SIZE.y - 150.0);
+                            ui.add_space(CARD_SIZE.y - 162.0);
                         } else {
                             egui::ScrollArea::vertical()
-                                .max_height(CARD_SIZE.y - 130.0)
+                                .max_height(CARD_SIZE.y - 142.0)
                                 .auto_shrink([false, false])
                                 .show_rows(ui, row_height, rows.len(), |ui, range| {
+                                    let starred = rows.iter().take_while(|r| r.favorite).count();
                                     for i in range {
-                                        if row(ui, theme, &rows[i], row_height).clicked() {
-                                            outcome = Outcome::Picked(i);
+                                        match row(ui, theme, &rows[i], row_height, full) {
+                                            RowClick::Pick => outcome = Outcome::Picked(i),
+                                            RowClick::Star => outcome = Outcome::ToggleFavorite(i),
+                                            RowClick::None => {}
+                                        }
+                                        // Line between the favourites and the rest.
+                                        if i + 1 == starred && starred < rows.len() {
+                                            let r = ui.min_rect();
+                                            ui.painter().hline(
+                                                r.x_range(),
+                                                r.bottom(),
+                                                Stroke::new(1.0, card_border),
+                                            );
                                         }
                                     }
                                 });
@@ -133,6 +154,11 @@ pub fn show(
                                     .size(10.0)
                                     .color(theme::text_tertiary(theme)),
                             );
+                            ui.label(
+                                egui::RichText::new(texts.star_hint.as_str())
+                                    .size(10.0)
+                                    .color(theme::text_tertiary(theme)),
+                            );
                         });
                     });
             });
@@ -140,15 +166,52 @@ pub fn show(
     outcome
 }
 
-fn row(ui: &mut egui::Ui, theme: Theme, r: &Row<'_>, height: f32) -> egui::Response {
+/// What a click on a row hit.
+enum RowClick {
+    None,
+    Pick,
+    Star,
+}
+
+/// Width of the star's click zone, on the left of the row.
+const STAR_ZONE: f32 = 26.0;
+
+fn row(ui: &mut egui::Ui, theme: Theme, r: &Row<'_>, height: f32, full: bool) -> RowClick {
     let (rect, response) =
         ui.allocate_exact_size(Vec2::new(ui.available_width(), height), Sense::click());
+    let star_rect = egui::Rect::from_min_size(rect.min, Vec2::new(STAR_ZONE, rect.height()));
+    let can_star = r.favorite || !full;
+    let pointer = response.hover_pos();
+    let on_star = pointer.is_some_and(|p| star_rect.contains(p));
     if response.hovered() {
         ui.painter().rect_filled(rect, 4.0, theme::hover_bg(theme));
-        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        if !on_star || can_star {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        }
     }
+
+    // Star: filled when starred, outlined on hover otherwise (a column of
+    // empty stars would clutter the list), faint when the list is full.
+    let accent = match theme {
+        Theme::Dark => theme::ACTIVE_DARK,
+        Theme::Light => theme::ACTIVE_LIGHT,
+    };
+    let star_center = star_rect.center() + Vec2::new(2.0, 0.0);
+    if r.favorite {
+        star(ui.painter(), star_center, 6.0, Some(accent), accent);
+    } else if response.hovered() {
+        let color = if !can_star {
+            theme::text_tertiary(theme).gamma_multiply(0.4)
+        } else if on_star {
+            accent
+        } else {
+            theme::text_tertiary(theme)
+        };
+        star(ui.painter(), star_center, 6.0, None, color);
+    }
+
     let painter = ui.painter();
-    let left = rect.left() + 8.0;
+    let left = rect.left() + STAR_ZONE;
     if r.detail.is_empty() {
         painter.text(
             egui::pos2(left, rect.center().y),
@@ -180,5 +243,40 @@ fn row(ui: &mut egui::Ui, theme: Theme, r: &Row<'_>, height: f32) -> egui::Respo
         egui::FontId::monospace(11.0),
         theme::text_tertiary(theme),
     );
-    response
+
+    if !response.clicked() {
+        RowClick::None
+    } else if on_star {
+        if can_star { RowClick::Star } else { RowClick::None }
+    } else {
+        RowClick::Pick
+    }
+}
+
+/// Five-pointed star, drawn by hand: the default fonts have no star glyph.
+/// The shape is concave, so the fill is the inner pentagon plus one
+/// triangle per point.
+fn star(
+    painter: &egui::Painter,
+    center: egui::Pos2,
+    radius: f32,
+    fill: Option<Color32>,
+    outline: Color32,
+) {
+    let points: Vec<egui::Pos2> = (0..10)
+        .map(|k| {
+            let angle = -std::f32::consts::FRAC_PI_2 + k as f32 * std::f32::consts::PI / 5.0;
+            let r = if k % 2 == 0 { radius } else { radius * 0.45 };
+            center + Vec2::angled(angle) * r
+        })
+        .collect();
+    if let Some(fill) = fill {
+        let inner: Vec<egui::Pos2> = points.iter().skip(1).step_by(2).copied().collect();
+        painter.add(egui::Shape::convex_polygon(inner, fill, Stroke::NONE));
+        for k in (0..10).step_by(2) {
+            let tri = vec![points[(k + 9) % 10], points[k], points[k + 1]];
+            painter.add(egui::Shape::convex_polygon(tri, fill, Stroke::NONE));
+        }
+    }
+    painter.add(egui::Shape::closed_line(points, Stroke::new(1.0, outline)));
 }

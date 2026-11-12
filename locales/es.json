@@ -96,5 +96,8 @@
     "shortcuts_only_in_dofus": "Marcado: tus atajos no hacen nada cuando estás en otra aplicación (navegador, Discord…); la tecla funciona normalmente allí. Sin marcar: funcionan en todas partes.",
     "always_on_top": "Marcado: la ventana queda por encima de todas, incluso al hacer clic en Dofus. Sin marcar: pasa detrás, como una ventana normal.",
     "group_leader": "La cuenta que invita a las demás, a la que siguen en un trayecto a un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista."
+  },
+  "favorites": {
+    "hint": "Estrella: favorito, arriba de la lista (%{max} máx.)"
   }
 }

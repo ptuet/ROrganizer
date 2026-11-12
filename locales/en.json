@@ -96,5 +96,8 @@
     "shortcuts_only_in_dofus": "Checked: your shortcuts do nothing while you are in another application (browser, Discord…); the key works normally there. Unchecked: they work everywhere.",
     "always_on_top": "Checked: the window stays above all the others, even when you click Dofus. Unchecked: it goes behind, like a normal window.",
     "group_leader": "The account that invites the others, that the others follow on an NPC trip, and that the app comes back to after a group command. By default, the first of the list."
+  },
+  "favorites": {
+    "hint": "Star: favourite, at the top of the list (%{max} max)"
   }
 }
