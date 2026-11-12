@@ -1,5 +1,6 @@
 //! Settings modal (gear button in the header), in three tabs: options,
-//! keys of the game, about.
+//! group commands (leader, speed, NPC follow, keys of the game), about.
+//! Every option has a "?" that unfolds its explanation under it.
 //!
 //! Layout follows the same backdrop + centred card pattern as
 //! `capture::draw`. The card is theme-aware (dark/light palettes from
@@ -13,7 +14,7 @@ use egui::{Color32, CornerRadius, Frame, Margin, Sense, Stroke, StrokeKind, Vec2
 use rust_i18n::t;
 
 use crate::app::App;
-use crate::game_keys::GameKeyTarget;
+use crate::game_keys::{CommandSpeed, GameKeyTarget};
 use crate::theme::{self, Theme};
 
 /// The fork's repository: GitHub link and bug reports go there. The original
@@ -98,99 +99,9 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                         app.set_settings_tab(tab);
                         ui.add_space(12.0);
                         match tab {
-                            SettingsTab::Options => {
-                                let mut to_taskbar = app.minimize_to_taskbar();
-                                if ui
-                                    .checkbox(
-                                        &mut to_taskbar,
-                                        egui::RichText::new(t!("about.minimize_to_taskbar"))
-                                            .size(12.0)
-                                            .color(theme::text_secondary(theme)),
-                                    )
-                                    .changed()
-                                {
-                                    app.set_minimize_to_taskbar(to_taskbar);
-                                }
-                                ui.add_space(4.0);
-                                let mut dofus_only = app.shortcuts_only_in_dofus();
-                                if ui
-                                    .checkbox(
-                                        &mut dofus_only,
-                                        egui::RichText::new(t!("about.shortcuts_only_in_dofus"))
-                                            .size(12.0)
-                                            .color(theme::text_secondary(theme)),
-                                    )
-                                    .changed()
-                                {
-                                    app.set_shortcuts_only_in_dofus(dofus_only);
-                                }
-                                ui.add_space(4.0);
-                                let mut on_top = app.always_on_top();
-                                if ui
-                                    .checkbox(
-                                        &mut on_top,
-                                        egui::RichText::new(t!("about.always_on_top"))
-                                            .size(12.0)
-                                            .color(theme::text_secondary(theme)),
-                                    )
-                                    .changed()
-                                {
-                                    app.set_always_on_top(ctx, on_top);
-                                }
-                                ui.add_space(4.0);
-                                let mut follow = app.npc_follow_leader();
-                                if ui
-                                    .checkbox(
-                                        &mut follow,
-                                        egui::RichText::new(t!("about.npc_follow_leader"))
-                                            .size(12.0)
-                                            .color(theme::text_secondary(theme)),
-                                    )
-                                    .on_hover_text(t!("about.npc_follow_leader_hint").to_string())
-                                    .changed()
-                                {
-                                    app.set_npc_follow_leader(follow);
-                                }
-                                // Pause before the leader's follow shortcut: only
-                                // meaningful when the option above is on.
-                                let mut secs = app.npc_follow_delay_ms() as f32 / 1000.0;
-                                ui.horizontal(|ui| {
-                                    ui.add_space(24.0);
-                                    let min = crate::npcs::FOLLOW_DELAY_MIN_MS as f32 / 1000.0;
-                                    let max = crate::npcs::FOLLOW_DELAY_MAX_MS as f32 / 1000.0;
-                                    let resp = ui
-                                        .add_enabled(
-                                            follow,
-                                            egui::Slider::new(&mut secs, min..=max)
-                                                .step_by(0.1)
-                                                .fixed_decimals(1)
-                                                .suffix(" s")
-                                                .text(t!("about.npc_follow_delay").to_string()),
-                                        )
-                                        .on_hover_text(t!("about.npc_follow_delay_hint").to_string());
-                                    if resp.changed() {
-                                        app.set_npc_follow_delay_ms((secs * 1000.0).round() as u32);
-                                    }
-                                });
-
-                            }
-                            SettingsTab::Keys => {
-                                ui.label(
-                                    egui::RichText::new(t!("game_keys.intro"))
-                                        .size(11.0)
-                                        .color(theme::text_secondary(theme)),
-                                );
-                                ui.add_space(10.0);
-                                let keys = app.game_keys();
-                                for (target, label) in [
-                                    (GameKeyTarget::OpenChat, t!("game_keys.open_chat")),
-                                    (GameKeyTarget::FollowLeader, t!("game_keys.follow_leader")),
-                                ] {
-                                    if key_row(ui, theme, &label, &keys.get(target).label()).clicked() {
-                                        capture_clicked = Some(target);
-                                    }
-                                    ui.add_space(8.0);
-                                }
+                            SettingsTab::Options => options_tab(ui, ctx, app, theme),
+                            SettingsTab::Group => {
+                                capture_clicked = group_tab(ui, app, theme);
                             }
                             SettingsTab::About => {
                                 ui.vertical_centered(|ui| {
@@ -282,8 +193,7 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                             }
                         }
                         // Close button at the same place on every tab.
-                        let footer_h = 48.0;
-                        let free = ui.available_height() - footer_h;
+                        let free = ui.available_height() - FOOTER_H;
                         if free > 0.0 {
                             ui.add_space(free);
                         }
@@ -323,12 +233,224 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     }
 }
 
+/// Height kept free under the tabs for the close button and its hint.
+const FOOTER_H: f32 = 48.0;
+
+/// Window behaviour options.
+fn options_tab(ui: &mut egui::Ui, ctx: &egui::Context, app: &mut App, theme: Theme) {
+    let mut to_taskbar = app.minimize_to_taskbar();
+    option_row(ui, theme, "taskbar", &t!("help.minimize_to_taskbar"), |ui| {
+        if checkbox(ui, theme, &mut to_taskbar, &t!("about.minimize_to_taskbar")) {
+            app.set_minimize_to_taskbar(to_taskbar);
+        }
+    });
+    let mut dofus_only = app.shortcuts_only_in_dofus();
+    option_row(ui, theme, "dofus_only", &t!("help.shortcuts_only_in_dofus"), |ui| {
+        if checkbox(ui, theme, &mut dofus_only, &t!("about.shortcuts_only_in_dofus")) {
+            app.set_shortcuts_only_in_dofus(dofus_only);
+        }
+    });
+    let mut on_top = app.always_on_top();
+    option_row(ui, theme, "on_top", &t!("help.always_on_top"), |ui| {
+        if checkbox(ui, theme, &mut on_top, &t!("about.always_on_top")) {
+            app.set_always_on_top(ctx, on_top);
+        }
+    });
+}
+
+/// Group commands: leader, speed, NPC follow, keys of the game. Returns the
+/// game key to capture when one of its rows was clicked.
+fn group_tab(ui: &mut egui::Ui, app: &mut App, theme: Theme) -> Option<GameKeyTarget> {
+    let mut capture = None;
+    let height = (ui.available_height() - FOOTER_H).max(60.0);
+    egui::ScrollArea::vertical()
+        .max_height(height)
+        .auto_shrink([false, true])
+        .show(ui, |ui| {
+            // Group leader.
+            option_row(ui, theme, "leader", &t!("help.group_leader"), |ui| {
+                section_label(ui, theme, &t!("group.leader"));
+            });
+            leader_combo(ui, app);
+            ui.add_space(10.0);
+
+            // Command speed.
+            option_row(ui, theme, "speed", &t!("help.command_speed"), |ui| {
+                section_label(ui, theme, &t!("group.speed"));
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(22.0);
+                let mut speed = app.command_speed();
+                for (s, label) in CommandSpeed::ALL.into_iter().zip([
+                    t!("group.speed_normal"),
+                    t!("group.speed_slow"),
+                    t!("group.speed_very_slow"),
+                ]) {
+                    ui.selectable_value(&mut speed, s, egui::RichText::new(label).size(12.0));
+                }
+                app.set_command_speed(speed);
+            });
+            ui.add_space(10.0);
+
+            // NPC travel: follow the leader, and the pause before it.
+            let mut follow = app.npc_follow_leader();
+            option_row(ui, theme, "follow", &t!("about.npc_follow_leader_hint"), |ui| {
+                if checkbox(ui, theme, &mut follow, &t!("about.npc_follow_leader")) {
+                    app.set_npc_follow_leader(follow);
+                }
+            });
+            let mut secs = app.npc_follow_delay_ms() as f32 / 1000.0;
+            option_row(ui, theme, "pause", &t!("about.npc_follow_delay_hint"), |ui| {
+                let min = crate::npcs::FOLLOW_DELAY_MIN_MS as f32 / 1000.0;
+                let max = crate::npcs::FOLLOW_DELAY_MAX_MS as f32 / 1000.0;
+                let slider = egui::Slider::new(&mut secs, min..=max)
+                    .step_by(0.1)
+                    .fixed_decimals(1)
+                    .suffix(" s")
+                    .text(t!("about.npc_follow_delay").to_string());
+                if ui.add_enabled(follow, slider).changed() {
+                    app.set_npc_follow_delay_ms((secs * 1000.0).round() as u32);
+                }
+            });
+            ui.add_space(10.0);
+
+            // Keys of the game.
+            option_row(ui, theme, "keys", &t!("game_keys.intro"), |ui| {
+                section_label(ui, theme, &t!("group.keys"));
+            });
+            let keys = app.game_keys();
+            for (target, label) in [
+                (GameKeyTarget::OpenChat, t!("game_keys.open_chat")),
+                (GameKeyTarget::FollowLeader, t!("game_keys.follow_leader")),
+            ] {
+                if key_row(ui, theme, &label, &keys.get(target).label()).clicked() {
+                    capture = Some(target);
+                }
+                ui.add_space(6.0);
+            }
+        });
+    capture
+}
+
+/// "Chef de groupe" dropdown: first of the list, or a launched account. A
+/// saved leader that is not launched stays listed, marked offline.
+fn leader_combo(ui: &mut egui::Ui, app: &mut App) {
+    let first = t!("group.leader_first").to_string();
+    let current = app.group_leader().map(str::to_string);
+    let mut names = app.live_names();
+    let offline = current.as_ref().filter(|c| !names.contains(c)).cloned();
+    if let Some(c) = &offline {
+        names.push(c.clone());
+    }
+    let shown = |name: &String| {
+        if Some(name) == offline.as_ref() {
+            t!("group.leader_offline", name = name.as_str()).to_string()
+        } else {
+            name.clone()
+        }
+    };
+    let mut choice = current.clone();
+    ui.horizontal(|ui| {
+        ui.add_space(22.0);
+        egui::ComboBox::from_id_salt("group_leader")
+            .width(ui.available_width())
+            .selected_text(choice.as_ref().map_or(first.clone(), &shown))
+            .show_ui(ui, |ui| {
+                ui.selectable_value(&mut choice, None, first.as_str());
+                for name in &names {
+                    ui.selectable_value(&mut choice, Some(name.clone()), shown(name));
+                }
+            });
+    });
+    if choice != current {
+        app.set_group_leader(choice);
+    }
+}
+
+/// An option with its "?" button on the right. Clicking "?" shows the
+/// explanation under the option, wrapped to the card width; clicking again
+/// hides it. Replaces hover tooltips, which showed late and overflowed the
+/// 340 px window.
+fn option_row(
+    ui: &mut egui::Ui,
+    theme: Theme,
+    id: &str,
+    help: &str,
+    add: impl FnOnce(&mut egui::Ui),
+) {
+    let open_id = ui.make_persistent_id(("help", id));
+    let mut open = ui.data(|d| d.get_temp::<bool>(open_id)).unwrap_or(false);
+    ui.horizontal_top(|ui| {
+        let width = ui.available_width() - 22.0;
+        ui.allocate_ui_with_layout(
+            egui::vec2(width, 0.0),
+            egui::Layout::top_down(egui::Align::Min),
+            add,
+        );
+        if help_button(ui, theme, open).clicked() {
+            open = !open;
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(open_id, open));
+    if open {
+        ui.add(
+            egui::Label::new(
+                egui::RichText::new(help)
+                    .size(10.5)
+                    .color(theme::text_tertiary(theme)),
+            )
+            .wrap(),
+        );
+    }
+    ui.add_space(4.0);
+}
+
+/// Small round "?" button; filled while its explanation is shown.
+fn help_button(ui: &mut egui::Ui, theme: Theme, open: bool) -> egui::Response {
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), Sense::click());
+    let accent = match theme {
+        Theme::Dark => theme::ACTIVE_DARK,
+        Theme::Light => theme::ACTIVE_LIGHT,
+    };
+    let color = if open || resp.hovered() { accent } else { theme::text_tertiary(theme) };
+    let c = rect.center();
+    if open {
+        ui.painter().circle_filled(c, 7.5, color);
+    } else {
+        ui.painter().circle_stroke(c, 7.0, Stroke::new(1.0, color));
+    }
+    ui.painter().text(
+        c,
+        egui::Align2::CENTER_CENTER,
+        "?",
+        egui::FontId::proportional(11.0),
+        if open { theme::window_bg(theme) } else { color },
+    );
+    if resp.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
+    resp
+}
+
+/// Checkbox with a wrapping label. True when toggled.
+fn checkbox(ui: &mut egui::Ui, theme: Theme, value: &mut bool, label: &str) -> bool {
+    ui.checkbox(
+        value,
+        egui::RichText::new(label).size(12.0).color(theme::text_secondary(theme)),
+    )
+    .changed()
+}
+
+fn section_label(ui: &mut egui::Ui, theme: Theme, text: &str) {
+    ui.label(egui::RichText::new(text).size(12.0).strong().color(theme::text_primary(theme)));
+}
+
 /// Tabs of the settings modal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SettingsTab {
     #[default]
     Options,
-    Keys,
+    Group,
     About,
 }
 
@@ -336,7 +458,7 @@ pub enum SettingsTab {
 fn tab_bar(ui: &mut egui::Ui, theme: Theme, tab: &mut SettingsTab) {
     let tabs = [
         (SettingsTab::Options, t!("settings.tab_options")),
-        (SettingsTab::Keys, t!("settings.tab_keys")),
+        (SettingsTab::Group, t!("settings.tab_group")),
         (SettingsTab::About, t!("settings.tab_about")),
     ];
     let width = ui.available_width() / tabs.len() as f32;

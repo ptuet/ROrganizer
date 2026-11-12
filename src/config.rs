@@ -45,6 +45,12 @@ pub struct StoredConfig {
     /// leader). Missing → the game's defaults.
     #[serde(default)]
     pub game_keys: crate::game_keys::GameKeys,
+    /// Account that invites, walks and is followed; missing = first of the list.
+    #[serde(default)]
+    pub group_leader: Option<String>,
+    /// How fast the chat commands are typed; missing = normal.
+    #[serde(default)]
+    pub command_speed: crate::game_keys::CommandSpeed,
 }
 
 fn default_true() -> bool {
@@ -136,6 +142,8 @@ mod tests {
             npc_follow_leader: true,
             npc_follow_delay_ms: 1200,
             game_keys: crate::game_keys::GameKeys::default(),
+            group_leader: Some("Dowoip".into()),
+            command_speed: crate::game_keys::CommandSpeed::Slow,
         }
     }
 
@@ -187,6 +195,8 @@ mod tests {
         assert_eq!(loaded.always_on_top, cfg.always_on_top);
         assert_eq!(loaded.npc_follow_leader, cfg.npc_follow_leader);
         assert_eq!(loaded.npc_follow_delay_ms, cfg.npc_follow_delay_ms);
+        assert_eq!(loaded.group_leader, cfg.group_leader);
+        assert_eq!(loaded.command_speed, cfg.command_speed);
     }
 
     #[test]

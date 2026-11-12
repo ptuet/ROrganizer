@@ -48,6 +48,20 @@ pub(crate) fn compute_conflicts(
         .collect()
 }
 
+/// `accounts` (list order) with the chosen leader moved to the front. A
+/// leader that is not launched, or none, keeps the list order: the first
+/// account leads.
+pub(crate) fn leader_first(
+    mut accounts: Vec<(SlotKey, isize)>,
+    leader: Option<&str>,
+) -> Vec<(SlotKey, isize)> {
+    if let Some(pos) = leader.and_then(|l| accounts.iter().position(|(s, _)| s == l)) {
+        let chosen = accounts.remove(pos);
+        accounts.insert(0, chosen);
+    }
+    accounts
+}
+
 /// Total order on BindingTarget for deterministic JSON serialization.
 /// Account names alphabetical first, then CycleNext (+ alt), then CyclePrev (+ alt).
 fn binding_target_sort_key(b: &BindingTarget) -> (u8, &str) {
@@ -148,6 +162,10 @@ pub struct App {
     npc_follow_delay_ms: u32,
     /// Keys of the game pressed by the chat commands (settings).
     game_keys: crate::game_keys::GameKeys,
+    /// Account that invites, walks and is followed; `None` = first of the list.
+    group_leader: Option<SlotKey>,
+    /// How fast the chat commands are typed (setting).
+    command_speed: crate::game_keys::CommandSpeed,
     /// Game key being set in the capture modal; the settings reopen after.
     game_key_capture: Option<crate::game_keys::GameKeyTarget>,
     /// Tab shown in the settings modal.
@@ -204,6 +222,8 @@ impl App {
             .map_or(crate::npcs::FOLLOW_DELAY_DEFAULT_MS, |c| c.npc_follow_delay_ms)
             .clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
         let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
+        let group_leader = stored.as_ref().and_then(|c| c.group_leader.clone());
+        let command_speed = stored.as_ref().map(|c| c.command_speed).unwrap_or_default();
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -283,6 +303,8 @@ impl App {
             npc_follow_leader,
             npc_follow_delay_ms,
             game_keys,
+            group_leader,
+            command_speed,
             game_key_capture: None,
             settings_tab: ui::about::SettingsTab::default(),
             show_about: false,
@@ -473,21 +495,23 @@ impl App {
     /// From the first account of the list, sends `/invite <name>` for every
     /// other launched account.
     pub fn invite_group(&self, ctx: &egui::Context) {
-        let accounts = self.live_accounts();
+        let accounts = self.group_accounts();
         let Some(((_, leader), others)) = accounts.split_first() else {
             return;
         };
         let commands = win::chat::invite_commands(others.iter().map(|(name, _)| name.as_str()));
         let ctx = ctx.clone();
         let plan = vec![win::chat::Action::Type(*leader, commands)];
-        win::chat::send_plan(plan, self.game_keys, None, move || ctx.request_repaint());
+        win::chat::send_plan(plan, self.game_keys, self.command_speed, None, move || {
+            ctx.request_repaint()
+        });
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
     /// first account comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
         let plan = self
-            .live_hwnds()
+            .group_hwnds()
             .into_iter()
             .map(|h| win::chat::Action::Type(h, vec![zaap.command()]))
             .collect();
@@ -501,20 +525,55 @@ impl App {
         let follow = self
             .npc_follow_leader
             .then(|| Duration::from_millis(u64::from(self.npc_follow_delay_ms)));
-        let plan = crate::npcs::travel_plan(npc, &self.live_hwnds(), follow);
+        let plan = crate::npcs::travel_plan(npc, &self.group_hwnds(), follow);
         self.run_plan(ctx, plan);
     }
 
-    /// Runs a chat plan, then brings the first account back to the front.
+    /// Runs a chat plan, then brings the group leader back to the front.
     fn run_plan(&self, ctx: &egui::Context, plan: Vec<win::chat::Action>) {
-        let first = self.live_hwnds().first().copied();
+        let leader = self.group_hwnds().first().copied();
         let ctx = ctx.clone();
-        win::chat::send_plan(plan, self.game_keys, first, move || ctx.request_repaint());
+        win::chat::send_plan(plan, self.game_keys, self.command_speed, leader, move || {
+            ctx.request_repaint()
+        });
     }
 
-    /// HWNDs of the launched accounts, in list order.
-    fn live_hwnds(&self) -> Vec<isize> {
-        self.live_accounts().into_iter().map(|(_, h)| h).collect()
+    /// Launched accounts, group leader first, then the others in list order.
+    fn group_accounts(&self) -> Vec<(SlotKey, isize)> {
+        leader_first(self.live_accounts(), self.group_leader.as_deref())
+    }
+
+    /// HWNDs of `group_accounts`.
+    fn group_hwnds(&self) -> Vec<isize> {
+        self.group_accounts().into_iter().map(|(_, h)| h).collect()
+    }
+
+    /// Chosen group leader, `None` = the first account of the list.
+    pub fn group_leader(&self) -> Option<&str> {
+        self.group_leader.as_deref()
+    }
+
+    pub fn set_group_leader(&mut self, slot: Option<String>) {
+        if self.group_leader != slot {
+            self.group_leader = slot;
+            self.mark_dirty();
+        }
+    }
+
+    /// Names of the launched accounts, in list order (leader picker).
+    pub fn live_names(&self) -> Vec<SlotKey> {
+        self.live_accounts().into_iter().map(|(s, _)| s).collect()
+    }
+
+    pub fn command_speed(&self) -> crate::game_keys::CommandSpeed {
+        self.command_speed
+    }
+
+    pub fn set_command_speed(&mut self, speed: crate::game_keys::CommandSpeed) {
+        if self.command_speed != speed {
+            self.command_speed = speed;
+            self.mark_dirty();
+        }
     }
 
     pub fn game_keys(&self) -> crate::game_keys::GameKeys {
@@ -761,6 +820,8 @@ impl App {
             npc_follow_leader: self.npc_follow_leader,
             npc_follow_delay_ms: self.npc_follow_delay_ms,
             game_keys: self.game_keys,
+            group_leader: self.group_leader.clone(),
+            command_speed: self.command_speed,
         };
         let _ = config::save_atomic(path, &cfg);
     }
@@ -948,6 +1009,26 @@ mod tests {
 
     fn account(name: &str) -> BindingTarget {
         BindingTarget::Account(name.to_string())
+    }
+
+    fn accounts(names: &[&str]) -> Vec<(SlotKey, isize)> {
+        names.iter().enumerate().map(|(i, n)| (n.to_string(), i as isize)).collect()
+    }
+
+    fn names(list: &[(SlotKey, isize)]) -> Vec<&str> {
+        list.iter().map(|(s, _)| s.as_str()).collect()
+    }
+
+    #[test]
+    fn chosen_leader_moves_to_the_front() {
+        let out = leader_first(accounts(&["A", "B", "C"]), Some("C"));
+        assert_eq!(names(&out), ["C", "A", "B"]);
+    }
+
+    #[test]
+    fn no_leader_or_offline_leader_keeps_the_list_order() {
+        assert_eq!(names(&leader_first(accounts(&["A", "B"]), None)), ["A", "B"]);
+        assert_eq!(names(&leader_first(accounts(&["A", "B"]), Some("Z"))), ["A", "B"]);
     }
 
     #[test]

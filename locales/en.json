@@ -73,8 +73,8 @@
   },
   "settings": {
     "tab_options": "Options",
-    "tab_keys": "Game keys",
-    "tab_about": "About"
+    "tab_about": "About",
+    "tab_group": "Group"
   },
   "game_keys": {
     "intro": "The keys ROrganizer presses in Dofus for the invite, zaap and NPC buttons. Use the same as in the game’s shortcuts.",
@@ -83,5 +83,22 @@
     "modal_title": "Game key",
     "prompt": "Press the key or combination used in Dofus",
     "cancel_hint": "Esc to cancel"
+  },
+  "group": {
+    "leader": "Group leader",
+    "leader_first": "First of the list",
+    "leader_offline": "%{name} (not launched)",
+    "speed": "Command speed",
+    "speed_normal": "Normal",
+    "speed_slow": "Slow",
+    "speed_very_slow": "Very slow",
+    "keys": "Game keys"
+  },
+  "help": {
+    "minimize_to_taskbar": "Checked: “–” and “Activate” minimize the window to the taskbar, at the bottom of the screen, to keep the buttons one click away. Unchecked: it hides in the system tray, near the clock.",
+    "shortcuts_only_in_dofus": "Checked: your shortcuts do nothing while you are in another application (browser, Discord…); the key works normally there. Unchecked: they work everywhere.",
+    "always_on_top": "Checked: the window stays above all the others, even when you click Dofus. Unchecked: it goes behind, like a normal window.",
+    "group_leader": "The account that invites the others, that the others follow on an NPC trip, and that the app comes back to after a group command. By default, the first of the list.",
+    "command_speed": "If some commands fail (chat not opening, text cut, an account skipped), your PC needs more time between keys: switch to Slow, or Very slow."
   }
 }

@@ -15,7 +15,7 @@
 //! open chat (Space by default) → (Ctrl+V → Enter) × N → Escape. The keys of
 //! the game (open chat, follow the leader) are settings: `game_keys`.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -32,7 +32,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 };
 
 use super::focus::{focus_window, foreground_window};
-use crate::game_keys::{GameKey, GameKeys};
+use crate::game_keys::{CommandSpeed, GameKey, GameKeys};
 
 const CF_UNICODETEXT: u32 = 13;
 const VK_V: VIRTUAL_KEY = VIRTUAL_KEY(0x56);
@@ -55,6 +55,15 @@ const FOCUS_SETTLE: Duration = Duration::from_millis(200);
 /// Set while commands are being sent: a second request is dropped, two
 /// sequences would interleave their keys.
 static SENDING: AtomicBool = AtomicBool::new(false);
+
+/// Multiplier of the delays for the plan being sent (`CommandSpeed`). Only
+/// one plan runs at a time (`SENDING`), so a single value is enough.
+static SPEED: AtomicU32 = AtomicU32::new(1);
+
+/// `d` stretched by the user's command speed.
+fn slow(d: Duration) -> Duration {
+    d * SPEED.load(Ordering::Relaxed)
+}
 
 /// True while commands are being sent (the UI greys its button).
 pub fn is_busy() -> bool {
@@ -82,6 +91,7 @@ pub enum Action {
 pub fn send_plan(
     plan: Vec<Action>,
     keys: GameKeys,
+    speed: CommandSpeed,
     finish_on: Option<isize>,
     on_done: impl FnOnce() + Send + 'static,
 ) {
@@ -97,6 +107,7 @@ pub fn send_plan(
     {
         return;
     }
+    SPEED.store(speed.factor(), Ordering::Relaxed);
     thread::spawn(move || {
         crate::hooks::set_paused(true);
         let saved = read_clipboard_text();
@@ -134,19 +145,19 @@ fn run(target: isize, commands: &[String], open_chat: GameKey) -> bool {
     }
 
     tap_key(open_chat);
-    thread::sleep(STEP_DELAY);
+    thread::sleep(slow(STEP_DELAY));
     for cmd in commands {
         // The user switched window: stop rather than type into it.
         if foreground_window() != Some(target) || !set_clipboard_text(cmd) {
             return false;
         }
         press(VK_CONTROL);
-        thread::sleep(KEY_HOLD);
+        thread::sleep(slow(KEY_HOLD));
         tap(VK_V);
         release(VK_CONTROL);
-        thread::sleep(STEP_DELAY);
+        thread::sleep(slow(STEP_DELAY));
         tap(VK_RETURN);
-        thread::sleep(AFTER_SEND);
+        thread::sleep(slow(AFTER_SEND));
     }
     if foreground_window() != Some(target) {
         return false;
@@ -166,7 +177,7 @@ fn bring_to_front(target: isize) -> bool {
         }
         thread::sleep(Duration::from_millis(25));
     }
-    thread::sleep(FOCUS_SETTLE);
+    thread::sleep(slow(FOCUS_SETTLE));
     true
 }
 
@@ -177,7 +188,7 @@ fn follow_leader(target: isize, key: GameKey) -> bool {
         return false;
     }
     tap_key(key);
-    thread::sleep(AFTER_SEND);
+    thread::sleep(slow(AFTER_SEND));
     true
 }
 
@@ -193,7 +204,7 @@ fn tap_key(key: GameKey) {
         press(m);
     }
     if !mods.is_empty() {
-        thread::sleep(KEY_HOLD);
+        thread::sleep(slow(KEY_HOLD));
     }
     tap(VIRTUAL_KEY(key.vk as u16));
     for &m in mods.iter().rev() {
@@ -227,7 +238,7 @@ fn release(vk: VIRTUAL_KEY) {
 
 fn tap(vk: VIRTUAL_KEY) {
     press(vk);
-    thread::sleep(KEY_HOLD);
+    thread::sleep(slow(KEY_HOLD));
     release(vk);
 }
 
