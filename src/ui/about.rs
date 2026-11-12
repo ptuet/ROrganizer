@@ -256,6 +256,18 @@ fn options_tab(ui: &mut egui::Ui, ctx: &egui::Context, app: &mut App, theme: The
             app.set_always_on_top(ctx, on_top);
         }
     });
+    // Pointer to the other tab: its options are about the game, not the
+    // window, and are easy to miss.
+    ui.add_space(8.0);
+    ui.add(
+        egui::Label::new(
+            egui::RichText::new(t!("settings.more_in_group"))
+                .size(10.5)
+                .italics()
+                .color(theme::text_tertiary(theme)),
+        )
+        .wrap(),
+    );
 }
 
 /// Group commands: leader, speed, NPC follow, keys of the game. Returns the

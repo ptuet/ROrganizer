@@ -633,7 +633,7 @@ désactivée par défaut) : tous font `/zaap`, pause réglable
 (`npc_follow_delay_ms`, curseur 0,5–3 s, 0,5 s par défaut — validé en jeu ;
 2,5 s était trop long ; un PC lent peut avoir besoin de plus pour charger
 les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
-dans l'onglet Groupe, envoyée avec le scan code du layout) et
+dans l'onglet Multicompte, envoyée avec le scan code du layout) et
 `/travel` sur le chef de groupe seulement. Plan construit par `npcs::travel_plan` (pur, testé),
 exécuté par `win::chat::send_plan` qui prend des `Action` (taper, Ctrl+W,
 pause). ⚠ Ctrl+W bascule le suivi : s'il était déjà actif, il se coupe.

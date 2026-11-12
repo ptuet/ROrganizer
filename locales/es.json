@@ -36,7 +36,7 @@
     "npc_follow_leader": "Trayecto a un PNJ: seguir al jefe de grupo",
     "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego el jefe de grupo activa el seguimiento (Ctrl+W por defecto) y es el único en hacer el trayecto; las demás lo siguen. Sin marcar: cada cuenta hace su propio trayecto.",
     "npc_follow_delay": "Pausa",
-    "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que el jefe de grupo active el seguimiento. Súbelo si alguna cuenta no sigue."
+    "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que el jefe de grupo active el seguimiento. Súbelo si alguna cuenta no sigue: tu PC necesita más tiempo para cargar los mapas."
   },
   "tray": {
     "show": "Mostrar",
@@ -74,7 +74,8 @@
   "settings": {
     "tab_options": "Opciones",
     "tab_about": "Acerca de",
-    "tab_group": "Grupo"
+    "tab_group": "Multicuenta",
+    "more_in_group": "Jefe de grupo, velocidad de los comandos, trayecto a un PNJ y teclas del juego: en la pestaña Multicuenta."
   },
   "game_keys": {
     "intro": "Las teclas que ROrganizer pulsa en Dofus para la invitación, el zaap y los PNJ. Pon las mismas que en los atajos del juego.",
