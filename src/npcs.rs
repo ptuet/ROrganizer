@@ -46,33 +46,42 @@ impl Npc {
     }
 }
 
-/// Wait between the last account's teleport and the leader's shortcut, so
-/// every member's zaap map has loaded before the leader starts walking.
-pub const FOLLOW_SETTLE: std::time::Duration = std::time::Duration::from_millis(500);
+/// Bounds and default of the wait between the last account's teleport and
+/// the leader's shortcut (setting), so every member's zaap map has loaded
+/// before the leader starts walking. 0.5 s works on a fast PC; a slow one
+/// may need more. Beyond 3 s map loading is not what blocks.
+pub const FOLLOW_DELAY_MIN_MS: u32 = 500;
+pub const FOLLOW_DELAY_MAX_MS: u32 = 3000;
+pub const FOLLOW_DELAY_DEFAULT_MS: u32 = 500;
 
 /// What every account types to reach `npc`; `accounts` in list order, the
 /// first one being the group leader.
 /// - `follow_leader` off: each account teleports and walks by itself.
-/// - on: everyone teleports, then the leader turns on "follow the group
-///   leader" (Ctrl+W) and is the only one to walk; the others follow.
-pub fn travel_plan(npc: &Npc, accounts: &[isize], follow_leader: bool) -> Vec<Action> {
+/// - on (`Some(pause)`): everyone teleports, `pause`, then the leader turns
+///   on "follow the group leader" (Ctrl+W) and is the only one to walk;
+///   the others follow.
+pub fn travel_plan(
+    npc: &Npc,
+    accounts: &[isize],
+    follow_leader: Option<std::time::Duration>,
+) -> Vec<Action> {
     let Some(&leader) = accounts.first() else {
         return Vec::new();
     };
     let travel = npc.travel_command();
-    if !follow_leader || travel.is_none() {
+    let (Some(pause), Some(travel)) = (follow_leader, travel) else {
         return accounts
             .iter()
             .map(|&h| Action::Type(h, vec![npc.command()]))
             .collect();
-    }
+    };
     let mut plan: Vec<Action> = accounts
         .iter()
         .map(|&h| Action::Type(h, vec![npc.zaap_command()]))
         .collect();
-    plan.push(Action::Pause(FOLLOW_SETTLE));
+    plan.push(Action::Pause(pause));
     plan.push(Action::FollowLeader(leader));
-    plan.push(Action::Type(leader, travel.into_iter().collect()));
+    plan.push(Action::Type(leader, vec![travel]));
     plan
 }
 
@@ -1880,13 +1889,14 @@ mod tests {
         assert_eq!(n.command(), "/zaap -2,0");
     }
 
+    const PAUSE: std::time::Duration = std::time::Duration::from_millis(800);
     const FAR: Npc = Npc { name: "X", area: "Y", x: 3, y: 12, zaap: (-1, 13) };
     const ON_ZAAP: Npc = Npc { name: "X", area: "Y", x: -2, y: 0, zaap: (-2, 0) };
 
     #[test]
     fn everyone_travels_by_default() {
         assert_eq!(
-            travel_plan(&FAR, &[1, 2], false),
+            travel_plan(&FAR, &[1, 2], None),
             vec![
                 Action::Type(1, vec!["/zaap -1,13;/travel 3,12".into()]),
                 Action::Type(2, vec!["/zaap -1,13;/travel 3,12".into()]),
@@ -1897,12 +1907,12 @@ mod tests {
     #[test]
     fn follow_mode_only_the_leader_walks() {
         assert_eq!(
-            travel_plan(&FAR, &[1, 2, 3], true),
+            travel_plan(&FAR, &[1, 2, 3], Some(PAUSE)),
             vec![
                 Action::Type(1, vec!["/zaap -1,13".into()]),
                 Action::Type(2, vec!["/zaap -1,13".into()]),
                 Action::Type(3, vec!["/zaap -1,13".into()]),
-                Action::Pause(FOLLOW_SETTLE),
+                Action::Pause(PAUSE),
                 Action::FollowLeader(1),
                 Action::Type(1, vec!["/travel 3,12".into()]),
             ]
@@ -1913,7 +1923,7 @@ mod tests {
     fn follow_mode_without_walk_is_just_the_zaap() {
         // NPC on the zaap's map: no follow shortcut, nothing to walk.
         assert_eq!(
-            travel_plan(&ON_ZAAP, &[1, 2], true),
+            travel_plan(&ON_ZAAP, &[1, 2], Some(PAUSE)),
             vec![
                 Action::Type(1, vec!["/zaap -2,0".into()]),
                 Action::Type(2, vec!["/zaap -2,0".into()]),
@@ -1923,7 +1933,7 @@ mod tests {
 
     #[test]
     fn no_account_no_plan() {
-        assert!(travel_plan(&FAR, &[], true).is_empty());
+        assert!(travel_plan(&FAR, &[], Some(PAUSE)).is_empty());
     }
 
     #[test]

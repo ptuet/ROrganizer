@@ -629,10 +629,12 @@ Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant comm
 commandes enchaînées par `;`, Dofus 3.7+).
 
 Option « Trajet vers un PNJ : suivre le premier compte » (`npc_follow_leader`,
-désactivée par défaut) : tous font `/zaap`, pause `FOLLOW_SETTLE` (0,5 s ; 2,5 s était trop long en jeu,
-chargement des cartes), puis **Ctrl+W** (suivi du chef, raccourci par défaut
-du jeu, envoyé avec le scan code du layout) et `/travel` sur le premier
-compte seulement. Plan construit par `npcs::travel_plan` (pur, testé),
+désactivée par défaut) : tous font `/zaap`, pause réglable
+(`npc_follow_delay_ms`, curseur 0,5–3 s, 0,5 s par défaut — validé en jeu ;
+2,5 s était trop long ; un PC lent peut avoir besoin de plus pour charger
+les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
+dans l'onglet Touches du jeu, envoyée avec le scan code du layout) et
+`/travel` sur le premier compte seulement. Plan construit par `npcs::travel_plan` (pur, testé),
 exécuté par `win::chat::send_plan` qui prend des `Action` (taper, Ctrl+W,
 pause). ⚠ Ctrl+W bascule le suivi : s'il était déjà actif, il se coupe.
 

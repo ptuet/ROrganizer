@@ -34,7 +34,9 @@
     "shortcuts_only_in_dofus": "Atajos activos solo cuando Dofus está en primer plano",
     "always_on_top": "Siempre en primer plano",
     "npc_follow_leader": "Trayecto a un PNJ: seguir a la primera cuenta",
-    "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego la primera activa el seguimiento de grupo (Ctrl+W) y es la única en hacer el trayecto. Sin marcar: cada cuenta hace su propio trayecto."
+    "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego la primera activa el seguimiento de grupo (Ctrl+W) y es la única en hacer el trayecto. Sin marcar: cada cuenta hace su propio trayecto.",
+    "npc_follow_delay": "Pausa",
+    "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que la primera cuenta active el seguimiento. Súbelo si alguna cuenta no sigue."
   },
   "tray": {
     "show": "Mostrar",

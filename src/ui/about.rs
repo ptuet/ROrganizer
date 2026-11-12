@@ -151,6 +151,27 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
                                 {
                                     app.set_npc_follow_leader(follow);
                                 }
+                                // Pause before the leader's follow shortcut: only
+                                // meaningful when the option above is on.
+                                let mut secs = app.npc_follow_delay_ms() as f32 / 1000.0;
+                                ui.horizontal(|ui| {
+                                    ui.add_space(24.0);
+                                    let min = crate::npcs::FOLLOW_DELAY_MIN_MS as f32 / 1000.0;
+                                    let max = crate::npcs::FOLLOW_DELAY_MAX_MS as f32 / 1000.0;
+                                    let resp = ui
+                                        .add_enabled(
+                                            follow,
+                                            egui::Slider::new(&mut secs, min..=max)
+                                                .step_by(0.1)
+                                                .fixed_decimals(1)
+                                                .suffix(" s")
+                                                .text(t!("about.npc_follow_delay").to_string()),
+                                        )
+                                        .on_hover_text(t!("about.npc_follow_delay_hint").to_string());
+                                    if resp.changed() {
+                                        app.set_npc_follow_delay_ms((secs * 1000.0).round() as u32);
+                                    }
+                                });
 
                             }
                             SettingsTab::Keys => {

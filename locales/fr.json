@@ -34,7 +34,9 @@
     "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan",
     "always_on_top": "Toujours au premier plan",
     "npc_follow_leader": "Trajet vers un PNJ : suivre le premier compte",
-    "npc_follow_leader_hint": "Coché : tous les comptes se téléportent au zaap, puis le premier compte active le suivi de groupe (Ctrl+W) et est le seul à faire le trajet. Décoché : chaque compte fait son propre trajet."
+    "npc_follow_leader_hint": "Coché : tous les comptes se téléportent au zaap, puis le premier compte active le suivi de groupe (Ctrl+W) et est le seul à faire le trajet. Décoché : chaque compte fait son propre trajet.",
+    "npc_follow_delay": "Pause",
+    "npc_follow_delay_hint": "Temps laissé aux cartes pour charger après le zaap, avant que le premier compte active le suivi. Augmente-la si certains comptes ne suivent pas."
   },
   "tray": {
     "show": "Afficher",
