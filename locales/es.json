@@ -17,10 +17,11 @@
     "tooltip_lang": "Idioma",
     "tooltip_refresh": "Actualizar",
     "tooltip_sort_taskbar": "Ordenar la barra de tareas en este orden",
-    "tooltip_invite_group": "Invitar a todas las cuentas al grupo de la primera",
+    "tooltip_invite_group": "Invitar a todas las cuentas al grupo",
     "tooltip_about": "Acerca de",
     "tooltip_zaap_group": "Enviar todas las cuentas al mismo zaap",
-    "tooltip_npc_group": "Enviar todas las cuentas a un PNJ"
+    "tooltip_npc_group": "Enviar todas las cuentas a un PNJ",
+    "tooltip_minimize_taskbar": "Minimizar en la barra de tareas"
   },
   "about": {
     "credit": "Desarrollado por Loulouw con la ayuda de Claude",
@@ -36,7 +37,9 @@
     "npc_follow_leader": "Trayecto a un PNJ: seguir al jefe de grupo",
     "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego el jefe de grupo activa el seguimiento (Ctrl+W por defecto) y es el único en hacer el trayecto; las demás lo siguen. Sin marcar: cada cuenta hace su propio trayecto.",
     "npc_follow_delay": "Pausa",
-    "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que el jefe de grupo active el seguimiento. Súbelo si alguna cuenta no sigue: tu PC necesita más tiempo para cargar los mapas."
+    "npc_follow_delay_hint": "Tiempo para que carguen los mapas tras el zaap, antes de que el jefe de grupo active el seguimiento. Súbelo si alguna cuenta no sigue: tu PC necesita más tiempo para cargar los mapas.",
+    "zaap_follow_leader": "Zaap: el jefe de grupo activa el seguimiento al llegar",
+    "zaap_follow_leader_hint": "Marcado: cuando todas las cuentas se han teletransportado, el jefe de grupo activa el seguimiento (Ctrl+W por defecto), tras la misma pausa que para los PNJ. Sin marcar: nada más tras el zaap."
   },
   "tray": {
     "show": "Mostrar",
@@ -44,7 +47,8 @@
     "activate": "Activar",
     "deactivate": "Desactivar",
     "status_active": "Activo · %{count} cuentas",
-    "status_inactive": "Inactivo"
+    "status_inactive": "Inactivo",
+    "status_active_one": "Activo · 1 cuenta"
   },
   "binding": {
     "set": "definir",
@@ -75,7 +79,7 @@
     "tab_options": "Opciones",
     "tab_about": "Acerca de",
     "tab_group": "Multicuenta",
-    "more_in_group": "Jefe de grupo, trayecto a un PNJ y teclas del juego: en la pestaña Multicuenta."
+    "more_in_group": "Jefe de grupo, seguimiento tras un zaap o hacia un PNJ, teclas del juego: en la pestaña Multicuenta."
   },
   "game_keys": {
     "intro": "Las teclas que ROrganizer pulsa en Dofus para la invitación, el zaap y los PNJ. Pon las mismas que en los atajos del juego.",
@@ -95,6 +99,9 @@
     "minimize_to_taskbar": "Marcado: «–» y «Activar» minimizan la ventana en la barra de tareas, abajo de la pantalla, para tener los botones a un clic. Sin marcar: se oculta en la bandeja del sistema, junto al reloj.",
     "shortcuts_only_in_dofus": "Marcado: tus atajos no hacen nada cuando estás en otra aplicación (navegador, Discord…); la tecla funciona normalmente allí. Sin marcar: funcionan en todas partes.",
     "always_on_top": "Marcado: la ventana queda por encima de todas, incluso al hacer clic en Dofus. Sin marcar: pasa detrás, como una ventana normal.",
-    "group_leader": "La cuenta que invita a las demás, a la que siguen en un trayecto a un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista."
+    "group_leader": "La cuenta que invita a las demás, a la que siguen tras un zaap o hacia un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista."
+  },
+  "favorites": {
+    "hint": "Estrella: favorito, arriba de la lista (%{max} máx.)"
   }
 }

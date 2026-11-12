@@ -26,6 +26,12 @@ pub struct Npc {
 }
 
 impl Npc {
+    /// Key of this NPC in the favourites (`config.json`). The same NPC can
+    /// stand in several places, hence the area and coordinates.
+    pub fn favorite_key(&self) -> String {
+        format!("{} · {} [{},{}]", self.name, self.area, self.x, self.y)
+    }
+
     /// Chat command: teleport to the zaap, then autopilot to the NPC's map.
     /// Several commands on one line are separated by ';' (Dofus 3.7+), the
     /// form used by other Dofus travel tools.

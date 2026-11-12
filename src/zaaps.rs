@@ -23,6 +23,29 @@ impl Zaap {
     pub fn command(&self) -> String {
         format!("/zaap {},{}", self.x, self.y)
     }
+
+    /// Every account in `accounts` (leader first) teleports here. With
+    /// `follow_leader`, after that pause (maps loading) the leader turns on
+    /// group follow.
+    pub fn plan(
+        &self,
+        accounts: &[isize],
+        follow_leader: Option<std::time::Duration>,
+    ) -> Vec<crate::win::chat::Action> {
+        use crate::win::chat::Action;
+        let mut plan: Vec<Action> =
+            accounts.iter().map(|&h| Action::Type(h, vec![self.command()])).collect();
+        if let (Some(pause), Some(&leader)) = (follow_leader, accounts.first()) {
+            plan.push(Action::Pause(pause));
+            plan.push(Action::FollowLeader(leader));
+        }
+        plan
+    }
+
+    /// Key of this zaap in the favourites (`config.json`).
+    pub fn favorite_key(&self) -> String {
+        format!("{} [{},{}]", self.name, self.x, self.y)
+    }
 }
 
 /// Zaaps whose territory or region contains every word of `query`, ignoring
@@ -109,6 +132,32 @@ mod tests {
 
     fn names(query: &str) -> Vec<&'static str> {
         search(query).into_iter().map(|z| z.name).collect()
+    }
+
+    const Z: Zaap = Zaap { name: "X", area: "Y", x: 1, y: -2 };
+
+    #[test]
+    fn plan_without_follow_only_teleports() {
+        use crate::win::chat::Action;
+        let cmd = vec!["/zaap 1,-2".to_string()];
+        assert_eq!(Z.plan(&[7, 8], None), [Action::Type(7, cmd.clone()), Action::Type(8, cmd)]);
+    }
+
+    #[test]
+    fn plan_with_follow_ends_with_the_leader_turning_it_on() {
+        use crate::win::chat::Action;
+        let pause = std::time::Duration::from_millis(500);
+        let cmd = vec!["/zaap 1,-2".to_string()];
+        assert_eq!(
+            Z.plan(&[7, 8], Some(pause)),
+            [
+                Action::Type(7, cmd.clone()),
+                Action::Type(8, cmd),
+                Action::Pause(pause),
+                Action::FollowLeader(7),
+            ]
+        );
+        assert!(Z.plan(&[], Some(pause)).is_empty());
     }
 
     #[test]

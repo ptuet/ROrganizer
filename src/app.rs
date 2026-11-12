@@ -156,8 +156,10 @@ pub struct App {
     shortcuts_only_in_dofus: bool,
     /// Window kept above every other one (option, off by default).
     always_on_top: bool,
-    /// NPC travel: follow the first account instead of each one walking.
+    /// NPC travel: follow the group leader instead of each one walking.
     npc_follow_leader: bool,
+    /// Group zaap: the leader turns on follow at the end (setting).
+    zaap_follow_leader: bool,
     /// Pause before the leader's follow shortcut, in ms (setting).
     npc_follow_delay_ms: u32,
     /// Keys of the game pressed by the chat commands (settings).
@@ -175,6 +177,9 @@ pub struct App {
     zaap_query: Option<String>,
     /// NPC picker modal: `Some(query)` while open, with the search text.
     npc_query: Option<String>,
+    /// Starred zaaps and NPCs, keys in starred order (`favorites`).
+    favorite_zaaps: Vec<String>,
+    favorite_npcs: Vec<String>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -214,13 +219,22 @@ impl App {
         // Off by default: the window is created normal (main.rs) and only
         // raised above the others when the user asked for it.
         let always_on_top = stored.as_ref().is_some_and(|c| c.always_on_top);
-        let npc_follow_leader = stored.as_ref().is_some_and(|c| c.npc_follow_leader);
+        let npc_follow_leader = stored.as_ref().is_none_or(|c| c.npc_follow_leader);
+        let zaap_follow_leader = stored.as_ref().is_none_or(|c| c.zaap_follow_leader);
         let npc_follow_delay_ms = stored
             .as_ref()
             .map_or(crate::npcs::FOLLOW_DELAY_DEFAULT_MS, |c| c.npc_follow_delay_ms)
             .clamp(crate::npcs::FOLLOW_DELAY_MIN_MS, crate::npcs::FOLLOW_DELAY_MAX_MS);
         let game_keys = stored.as_ref().map(|c| c.game_keys).unwrap_or_default();
         let group_leader = stored.as_ref().and_then(|c| c.group_leader.clone());
+        let favorite_zaaps = crate::favorites::clean(
+            stored.as_ref().map(|c| c.favorite_zaaps.clone()).unwrap_or_default(),
+            |k| crate::zaaps::ZAAPS.iter().any(|z| z.favorite_key() == k),
+        );
+        let favorite_npcs = crate::favorites::clean(
+            stored.as_ref().map(|c| c.favorite_npcs.clone()).unwrap_or_default(),
+            |k| crate::npcs::NPCS.iter().any(|n| n.favorite_key() == k),
+        );
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -298,6 +312,7 @@ impl App {
             shortcuts_only_in_dofus,
             always_on_top,
             npc_follow_leader,
+            zaap_follow_leader,
             npc_follow_delay_ms,
             game_keys,
             group_leader,
@@ -306,6 +321,8 @@ impl App {
             show_about: false,
             zaap_query: None,
             npc_query: None,
+            favorite_zaaps,
+            favorite_npcs,
             about_icon,
             class_icons,
         }
@@ -346,6 +363,17 @@ impl App {
     /// Search text of the zaap picker, `None` while it is closed.
     pub fn zaap_query_mut(&mut self) -> Option<&mut String> {
         self.zaap_query.as_mut()
+    }
+
+    pub fn favorite_zaaps(&self) -> &[String] {
+        &self.favorite_zaaps
+    }
+
+    /// Stars or unstars a zaap (nothing when 5 are already starred).
+    pub fn toggle_favorite_zaap(&mut self, key: String) {
+        if crate::favorites::toggle(&mut self.favorite_zaaps, key) {
+            self.mark_dirty();
+        }
     }
 
     /// Parent of the persisted config file, used by the About modal to
@@ -488,7 +516,7 @@ impl App {
         win::taskbar::reorder_taskbar(hwnds, move || ctx.request_repaint());
     }
 
-    /// From the first account of the list, sends `/invite <name>` for every
+    /// From the group leader, sends `/invite <name>` for every
     /// other launched account.
     pub fn invite_group(&self, ctx: &egui::Context) {
         let accounts = self.group_accounts();
@@ -504,19 +532,18 @@ impl App {
     }
 
     /// Every launched account types `/zaap x,y`, in list order, then the
-    /// first account comes back to the front.
+    /// group leader comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
-        let plan = self
-            .group_hwnds()
-            .into_iter()
-            .map(|h| win::chat::Action::Type(h, vec![zaap.command()]))
-            .collect();
+        let follow = self
+            .zaap_follow_leader
+            .then(|| Duration::from_millis(u64::from(self.npc_follow_delay_ms)));
+        let plan = zaap.plan(&self.group_hwnds(), follow);
         self.run_plan(ctx, plan);
     }
 
     /// Every launched account goes to the NPC: each one teleports and walks,
-    /// or (option) everyone teleports and follows the first account, the
-    /// only one to walk. The first account comes back to the front.
+    /// or (option) everyone teleports and follows the group leader, the
+    /// only one to walk. The leader comes back to the front.
     pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
         let follow = self
             .npc_follow_leader
@@ -616,6 +643,17 @@ impl App {
         }
     }
 
+    pub fn zaap_follow_leader(&self) -> bool {
+        self.zaap_follow_leader
+    }
+
+    pub fn set_zaap_follow_leader(&mut self, on: bool) {
+        if self.zaap_follow_leader != on {
+            self.zaap_follow_leader = on;
+            self.mark_dirty();
+        }
+    }
+
     pub fn open_npc(&mut self) {
         self.npc_query = Some(String::new());
     }
@@ -627,6 +665,17 @@ impl App {
     /// Search text of the NPC picker, `None` while it is closed.
     pub fn npc_query_mut(&mut self) -> Option<&mut String> {
         self.npc_query.as_mut()
+    }
+
+    pub fn favorite_npcs(&self) -> &[String] {
+        &self.favorite_npcs
+    }
+
+    /// Stars or unstars an NPC (nothing when 5 are already starred).
+    pub fn toggle_favorite_npc(&mut self, key: String) {
+        if crate::favorites::toggle(&mut self.favorite_npcs, key) {
+            self.mark_dirty();
+        }
     }
 
     /// Launched accounts with their HWND, in the order shown in the app.
@@ -803,9 +852,12 @@ impl App {
             shortcuts_only_in_dofus: self.shortcuts_only_in_dofus,
             always_on_top: self.always_on_top,
             npc_follow_leader: self.npc_follow_leader,
+            zaap_follow_leader: self.zaap_follow_leader,
             npc_follow_delay_ms: self.npc_follow_delay_ms,
             game_keys: self.game_keys,
             group_leader: self.group_leader.clone(),
+            favorite_zaaps: self.favorite_zaaps.clone(),
+            favorite_npcs: self.favorite_npcs.clone(),
         };
         let _ = config::save_atomic(path, &cfg);
     }

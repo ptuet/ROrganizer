@@ -34,10 +34,14 @@ pub struct StoredConfig {
     /// older JSONs → false: a normal window, also for existing users.
     #[serde(default)]
     pub always_on_top: bool,
-    /// NPC travel: everyone teleports and follows the first account (Ctrl+W),
-    /// the only one to walk. Off → each account walks by itself.
-    #[serde(default)]
+    /// NPC travel: everyone teleports and follows the group leader (Ctrl+W),
+    /// the only one to walk. Off → each account walks by itself. Missing → on.
+    #[serde(default = "default_true")]
     pub npc_follow_leader: bool,
+    /// Group zaap: once everyone has teleported, the leader turns on group
+    /// follow. Off → nothing after the teleport. Missing → on.
+    #[serde(default = "default_true")]
+    pub zaap_follow_leader: bool,
     /// Pause before the leader's follow shortcut, in ms (0.5–3 s).
     #[serde(default = "default_follow_delay")]
     pub npc_follow_delay_ms: u32,
@@ -48,6 +52,12 @@ pub struct StoredConfig {
     /// Account that invites, walks and is followed; missing = first of the list.
     #[serde(default)]
     pub group_leader: Option<String>,
+    /// Starred zaaps, shown first in the picker (`favorites`).
+    #[serde(default)]
+    pub favorite_zaaps: Vec<String>,
+    /// Starred NPCs, shown first in the picker (`favorites`).
+    #[serde(default)]
+    pub favorite_npcs: Vec<String>,
 }
 
 fn default_true() -> bool {
@@ -137,9 +147,12 @@ mod tests {
             shortcuts_only_in_dofus: false,
             always_on_top: true,
             npc_follow_leader: true,
+            zaap_follow_leader: true,
             npc_follow_delay_ms: 1200,
             game_keys: crate::game_keys::GameKeys::default(),
             group_leader: Some("Dowoip".into()),
+            favorite_zaaps: vec!["Port de Madrestam [7,-4]".into()],
+            favorite_npcs: vec!["Ganymède · Ganymède [1,2]".into()],
         }
     }
 
@@ -190,8 +203,25 @@ mod tests {
         assert_eq!(loaded.shortcuts_only_in_dofus, cfg.shortcuts_only_in_dofus);
         assert_eq!(loaded.always_on_top, cfg.always_on_top);
         assert_eq!(loaded.npc_follow_leader, cfg.npc_follow_leader);
+        assert_eq!(loaded.zaap_follow_leader, cfg.zaap_follow_leader);
         assert_eq!(loaded.npc_follow_delay_ms, cfg.npc_follow_delay_ms);
         assert_eq!(loaded.group_leader, cfg.group_leader);
+        assert_eq!(loaded.favorite_zaaps, cfg.favorite_zaaps);
+        assert_eq!(loaded.favorite_npcs, cfg.favorite_npcs);
+    }
+
+    #[test]
+    fn config_without_follow_fields_follows_the_leader() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        let obj = json.as_object_mut().unwrap();
+        obj.remove("npc_follow_leader");
+        obj.remove("zaap_follow_leader");
+        std::fs::write(&path, json.to_string()).unwrap();
+        let loaded = load(&path).expect("old config loads");
+        assert!(loaded.npc_follow_leader);
+        assert!(loaded.zaap_follow_leader);
     }
 
     #[test]

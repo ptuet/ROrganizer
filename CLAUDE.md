@@ -608,6 +608,13 @@ tape `/zaap x,y` à tour de rôle (`win::chat::send_plan`), puis le premier
 compte de la liste revient devant. `/zaap` vérifié en jeu : téléporte sans
 confirmation, depuis n'importe quelle map.
 
+Option « Zaap : le chef de groupe active le suivi à l'arrivée »
+(`zaap_follow_leader`, activée par défaut) : après les `/zaap`, même
+pause que pour les PNJ (`npc_follow_delay_ms`, curseur partagé) puis la
+touche « suivre le chef » sur le chef de groupe. Plan pur et testé :
+`Zaap::plan`. La touche bascule le suivi, mais `/zaap` le coupe déjà
+(constaté en jeu) : pressée juste après, elle l'active toujours.
+
 La liste (`src/zaaps.rs`, 45 zaaps) vient de **DofusDB** (indices de carte
 nommés « Zaap » + sous-zone = « Territoire » en jeu), générée **à la main**
 par `scripts/gen_zaaps.py` — jamais au build (pas de réseau). 8 entrées
@@ -629,7 +636,7 @@ Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant comm
 commandes enchaînées par `;`, Dofus 3.7+).
 
 Option « Trajet vers un PNJ : suivre le chef de groupe » (`npc_follow_leader`,
-désactivée par défaut) : tous font `/zaap`, pause réglable
+activée par défaut) : tous font `/zaap`, pause réglable
 (`npc_follow_delay_ms`, curseur 0,5–3 s, 0,5 s par défaut — validé en jeu ;
 2,5 s était trop long ; un PC lent peut avoir besoin de plus pour charger
 les cartes), puis la touche « suivre le chef » (Ctrl+W par défaut, réglable
@@ -655,6 +662,18 @@ donjons, événements, intérieurs aux coordonnées fictives.
 Projets similaires vus : Huzounet (outil PNJ, données non publiques) et
 travel-dofus (GitHub, **sans licence** : données non réutilisées, seule
 l'idée des objectifs de quêtes a été reprise).
+
+### Favoris zaaps et PNJ (`main` uniquement)
+
+Étoile à gauche de chaque ligne des deux pickers : 5 favoris max par liste
+(`favorites::MAX`), affichés en tête dans l'ordre où ils ont été ajoutés,
+séparés du reste par un trait ; Entrée sur une recherche vide prend donc le
+1ᵉʳ favori. Stockés dans `config.json` (`favorite_zaaps`, `favorite_npcs`)
+par une clé lisible nom + zone + coordonnées : les tables DofusDB n'ont pas
+d'identifiant stable. Une clé absente de la table (liste régénérée, config
+éditée à la main) est retirée au chargement (`favorites::clean`). L'étoile
+est dessinée à la main (`picker::star`) : les polices par défaut n'ont pas
+de glyphe étoile.
 
 ### Branches `main` / `vanilla`
 

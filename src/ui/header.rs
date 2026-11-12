@@ -57,7 +57,11 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                                 app.request_close(ctx);
                             }
                             let mini = titlebar_button(ui, "\u{2013}", theme)
-                                .on_hover_text(t!("header.tooltip_minimize").to_string());
+                                .on_hover_text(if app.minimize_to_taskbar() {
+                                    t!("header.tooltip_minimize_taskbar").to_string()
+                                } else {
+                                    t!("header.tooltip_minimize").to_string()
+                                });
                             if mini.clicked() {
                                 app.request_minimize(ctx);
                             }
