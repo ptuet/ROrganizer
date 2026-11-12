@@ -19,7 +19,8 @@
     "tooltip_sort_taskbar": "Sort the taskbar in this order",
     "tooltip_invite_group": "Invite every account into the first one's group",
     "tooltip_about": "About",
-    "tooltip_zaap_group": "Send every account to the same zaap"
+    "tooltip_zaap_group": "Send every account to the same zaap",
+    "tooltip_npc_group": "Send every account to an NPC"
   },
   "about": {
     "credit": "Built by Loulouw with the help of Claude",
@@ -59,5 +60,11 @@
     "search_hint": "Search a zaap…",
     "no_result": "No zaap found",
     "hint": "Click or Enter: every account goes there · Esc to close"
+  },
+  "npc": {
+    "title": "NPC for every account",
+    "search_hint": "Search an NPC or an area…",
+    "no_result": "No NPC found",
+    "hint": "Click or Enter: nearest zaap then travel · Esc to close"
   }
 }

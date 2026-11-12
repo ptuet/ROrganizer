@@ -147,6 +147,8 @@ pub struct App {
     show_about: bool,
     /// Zaap picker modal: `Some(query)` while open, with the search text.
     zaap_query: Option<String>,
+    /// NPC picker modal: `Some(query)` while open, with the search text.
+    npc_query: Option<String>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -264,6 +266,7 @@ impl App {
             always_on_top,
             show_about: false,
             zaap_query: None,
+            npc_query: None,
             about_icon,
             class_icons,
         }
@@ -461,14 +464,39 @@ impl App {
     /// Every launched account types `/zaap x,y`, in list order, then the
     /// first account comes back to the front.
     pub fn zaap_all(&self, ctx: &egui::Context, zaap: &crate::zaaps::Zaap) {
+        self.command_all(ctx, zaap.command());
+    }
+
+    /// Every launched account teleports to the NPC's zaap and walks to it
+    /// (`/zaap …;/travel …`), in list order, then the first account comes
+    /// back to the front.
+    pub fn npc_travel_all(&self, ctx: &egui::Context, npc: &crate::npcs::Npc) {
+        self.command_all(ctx, npc.command());
+    }
+
+    /// The same chat command typed by every launched account, in list order.
+    fn command_all(&self, ctx: &egui::Context, command: String) {
         let accounts = self.live_accounts();
         let plan: Vec<win::chat::Step> = accounts
             .iter()
-            .map(|(_, hwnd)| (*hwnd, vec![zaap.command()]))
+            .map(|(_, hwnd)| (*hwnd, vec![command.clone()]))
             .collect();
         let first = accounts.first().map(|(_, hwnd)| *hwnd);
         let ctx = ctx.clone();
         win::chat::send_plan(plan, first, move || ctx.request_repaint());
+    }
+
+    pub fn open_npc(&mut self) {
+        self.npc_query = Some(String::new());
+    }
+
+    pub fn close_npc(&mut self) {
+        self.npc_query = None;
+    }
+
+    /// Search text of the NPC picker, `None` while it is closed.
+    pub fn npc_query_mut(&mut self) -> Option<&mut String> {
+        self.npc_query.as_mut()
     }
 
     /// Launched accounts with their HWND, in the order shown in the app.
@@ -755,7 +783,7 @@ impl App {
         // the bottom — a clipped close button would look like a broken modal.
         const ABOUT_MIN: f32 = ui::about::ABOUT_CARD_HEIGHT;
         let mut desired = desired_content;
-        if self.show_about || self.zaap_query.is_some() {
+        if self.show_about || self.zaap_query.is_some() || self.npc_query.is_some() {
             desired = desired.max(ABOUT_MIN);
         }
         let desired = desired.clamp(280.0, 600.0);
@@ -811,6 +839,7 @@ impl eframe::App for App {
         ui::capture::draw(ctx, self);
         ui::about::draw(ctx, self);
         ui::zaap::draw(ctx, self);
+        ui::npc::draw(ctx, self);
 
         self.flush_if_due();
     }

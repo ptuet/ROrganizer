@@ -28,14 +28,22 @@ impl Zaap {
 /// Zaaps whose territory or region contains every word of `query`, ignoring
 /// case and accents. An empty query returns the whole list.
 pub fn search(query: &str) -> Vec<&'static Zaap> {
-    let words: Vec<String> = query.split_whitespace().map(fold).collect();
+    let words = query_words(query);
     ZAAPS
         .iter()
-        .filter(|z| {
-            let haystack = fold(&format!("{} {}", z.name, z.area));
-            words.iter().all(|w| haystack.contains(w.as_str()))
-        })
+        .filter(|z| matches_all(&words, &[z.name, z.area]))
         .collect()
+}
+
+/// Search words of `query`, folded (lowercase, no accents).
+pub(crate) fn query_words(query: &str) -> Vec<String> {
+    query.split_whitespace().map(fold).collect()
+}
+
+/// Whether every word appears in one of `fields` (folded).
+pub(crate) fn matches_all(words: &[String], fields: &[&str]) -> bool {
+    let haystack = fold(&fields.join(" "));
+    words.iter().all(|w| haystack.contains(w.as_str()))
 }
 
 /// Lowercase without accents: "Château" → "chateau".

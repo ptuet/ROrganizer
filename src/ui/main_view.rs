@@ -39,6 +39,7 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                 Some(SummaryAction::SortTaskbar) => app.sort_taskbar(ctx),
                 Some(SummaryAction::InviteGroup) => app.invite_group(ctx),
                 Some(SummaryAction::OpenZaap) => app.open_zaap(),
+                Some(SummaryAction::OpenNpc) => app.open_npc(),
                 None => {}
             }
             ui.add_space(10.0);
@@ -123,6 +124,7 @@ enum SummaryAction {
     SortTaskbar,
     InviteGroup,
     OpenZaap,
+    OpenNpc,
 }
 
 /// Account count + icon buttons. Returns the button clicked this frame.
@@ -171,9 +173,34 @@ fn draw_summary(ui: &mut egui::Ui, theme: Theme, count: usize) -> Option<Summary
             {
                 action = Some(SummaryAction::OpenZaap);
             }
+            if count >= 1
+                && icon_button(ui, theme, chat_busy, paint_npc_icon)
+                    .on_hover_text(t!("header.tooltip_npc_group").to_string())
+                    .clicked()
+                && !chat_busy
+            {
+                action = Some(SummaryAction::OpenNpc);
+            }
         });
     });
     action
+}
+
+/// "NPC": a map pin (the NPC's position).
+fn paint_npc_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+    let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
+    // Round head (most of a circle) narrowing to the tip at the bottom.
+    let (cx, cy, r) = (13.0, 8.5, 5.0);
+    let mut pin: Vec<egui::Pos2> = (0..=24)
+        .map(|i| {
+            let a = (150.0 + 240.0 * (i as f32 / 24.0)).to_radians();
+            p(cx + r * a.cos(), cy + r * a.sin())
+        })
+        .collect();
+    pin.push(p(cx, 19.0));
+    pin.push(pin[0]);
+    painter.add(egui::Shape::line(pin, stroke));
+    painter.circle_stroke(p(cx, cy), 1.8, stroke);
 }
 
 /// Small icon button drawn by hand, so it doesn't depend on a glyph being

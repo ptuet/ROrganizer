@@ -621,6 +621,31 @@ Pièges rencontrés en la générant :
 - `GET /subareas?id[$in][]=…` renvoie une réponse vide sur cette API ; le
   script interroge `/subareas/<id>` un par un.
 
+### PNJ pour tous les comptes (`main` uniquement)
+
+Bouton « repère » → fenêtre de recherche (`ui::npc`, sur le composant commun
+`ui::picker` partagé avec les zaaps) → chaque compte tape
+`/zaap zx,zy;/travel x,y` (forme utilisée par les outils de trajet Dofus,
+commandes enchaînées par `;`, Dofus 3.7+).
+
+La liste (`src/npcs.rs`, 1 771 entrées) est générée **à la main** par
+`scripts/gen_npcs.py` depuis DofusDB. Les données du client n'ont **pas** la
+position des PNJ : elle vient des **objectifs de quêtes** (types 1, 2, 3, 9,
+12 : « aller voir / montrer à / ramener à / retourner voir / rapporter à »),
+qui nomment le PNJ et sa carte. Un PNJ vu à plusieurs endroits a une entrée
+par endroit.
+
+Zaap de départ : le plus proche **de la même région** (`areaId`), sinon le
+zaap associé à la sous-zone par le jeu (`associatedZaapMapId`). Le zaap
+associé seul peut être loin (Forêt d'Amakna [3,12] → Rivage sufokien
+[10,22] alors que [-1,13] est à 4 cartes) ; la région évite de traverser la
+mer pour les îles. Entrées à plus de 25 cartes de leur zaap écartées :
+donjons, événements, intérieurs aux coordonnées fictives.
+
+Projets similaires vus : Huzounet (outil PNJ, données non publiques) et
+travel-dofus (GitHub, **sans licence** : données non réutilisées, seule
+l'idée des objectifs de quêtes a été reprise).
+
 ### Branches `main` / `vanilla`
 
 `vanilla` = version sans aucune interaction avec le client Dofus (pas de
