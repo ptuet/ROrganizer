@@ -34,6 +34,7 @@
 | **Inviter tous les comptes en groupe** | ✅ | — |
 | **Envoyer tous les comptes au même zaap** | ✅ | — |
 | **Envoyer tous les comptes vers un PNJ** | ✅ | — |
+| **Mode miniature** avec ces boutons | ✅ | — |
 | Envoie des commandes au jeu | **Oui**, uniquement quand tu cliques sur ces boutons | **Jamais** |
 
 Les deux se téléchargent sur la page [Releases](https://github.com/ptuet/ROrganizer/releases).
@@ -119,6 +120,10 @@ tout.
   groupe fait le trajet (`/travel`) et les autres le suivent (option)
 - ⭐ **Favoris** : jusqu'à 5 zaaps et 5 PNJ épinglés en haut de leur
   liste
+- 🔳 **Mode miniature** : une petite barre avec les boutons PNJ, zaap et
+  invitation, à laisser par-dessus le jeu (option « Toujours au premier
+  plan »). En ligne ou en carré, elle reste où tu l'as posée, et ses
+  points passent au vert quand tes raccourcis sont actifs
 - 🌓 **Thème clair ou sombre**, en FR / EN / ES
 - 📍 **Discret** : réduit dans la barre système, ou dans la barre des
   tâches si tu préfères garder les boutons à un clic (option dans les
