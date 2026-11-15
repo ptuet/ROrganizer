@@ -25,22 +25,6 @@
 > problèmes rencontrés en jeu et ajoute des fonctionnalités pour le
 > multicompte. Tout le mérite de l'application de base revient à son auteur.
 
-## Deux versions, au choix
-
-| | **ROrganizer** | **ROrganizer vanilla** |
-|---|---|---|
-| Fichier | `ROrganizer-<version>-x86_64-windows.exe` | `ROrganizer-<version>-vanilla-x86_64-windows.exe` |
-| Changement de compte, cycle, tri, barre des tâches | ✅ | ✅ |
-| **Inviter tous les comptes en groupe** | ✅ | — |
-| **Envoyer tous les comptes au même zaap** | ✅ | — |
-| **Envoyer tous les comptes vers un PNJ** | ✅ | — |
-| **Mode miniature** avec ces boutons | ✅ | — |
-| Envoie des commandes au jeu | **Oui**, uniquement quand tu cliques sur ces boutons | **Jamais** |
-
-Les deux se téléchargent sur la page [Releases](https://github.com/ptuet/ROrganizer/releases).
-Si tu veux un outil qui ne fait **que** changer de fenêtre, prends la
-version **vanilla**.
-
 > ⚠️ **Attention aux contrefaçons.** Les versions de ce fork se
 > téléchargent **uniquement** sur la page [Releases de ce dépôt](https://github.com/ptuet/ROrganizer/releases),
 > sous la forme d'**un seul exécutable**. Jamais dans une archive, jamais
@@ -84,7 +68,7 @@ tout.
   envoient quelque chose au jeu : ils tapent pour toi `/invite <pseudo>`,
   `/zaap x,y` ou `/travel x,y` dans le chat et peuvent appuyer sur la
   touche « suivre le chef » (Ctrl+W par défaut), et seulement quand tu
-  cliques dessus. La version **vanilla** n'a pas ces boutons.
+  cliques dessus.
 - **Aucune frappe clavier n'est enregistrée**. Les raccourcis sont
   identifiés à la volée puis oubliés.
 - Le seul fichier que l'app écrit, c'est **sa propre configuration**
@@ -135,7 +119,7 @@ tout.
 
 | 1️⃣ &nbsp; **Télécharge** | 2️⃣ &nbsp; **Lance** | 3️⃣ &nbsp; **Configure** |
 |:--|:--|:--|
-| Récupère le `.exe` de la version de ton choix depuis [Releases](https://github.com/ptuet/ROrganizer/releases). Aucun installeur, aucune dépendance. | Double-clique sur l'`.exe`. C'est tout. ROrganizer détecte automatiquement tes comptes Dofus déjà lancés. | Clique sur **« définir »** à côté d'un compte, puis presse la touche ou le bouton de souris que tu veux lui attribuer. |
+| Récupère le `.exe` depuis [Releases](https://github.com/ptuet/ROrganizer/releases). Aucun installeur, aucune dépendance. | Double-clique sur l'`.exe`. C'est tout. ROrganizer détecte automatiquement tes comptes Dofus déjà lancés. | Clique sur **« définir »** à côté d'un compte, puis presse la touche ou le bouton de souris que tu veux lui attribuer. |
 
 [![Télécharger ROrganizer](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_T%C3%A9l%C3%A9charger_ROrganizer-97c459?style=for-the-badge&labelColor=1c1c1a)](https://github.com/ptuet/ROrganizer/releases/latest)
 
@@ -174,7 +158,7 @@ Dofus** : il fait passer une fenêtre devant, exactement comme
 loin : ils tapent des commandes de chat dans plusieurs comptes à partir
 d'un seul clic. Ankama ne publie pas de règle claire sur ce point, et
 une action qui agit sur plusieurs comptes à la fois est la zone la plus
-sensible. Si tu veux éviter tout risque, utilise la version **vanilla**.
+sensible. Si tu veux éviter tout risque, utilise la [version vanilla](#version-vanilla).
 Dans tous les cas, l'utilisation d'outils tiers reste à tes risques au
 regard des conditions générales d'utilisation d'Ankama.
 
@@ -228,6 +212,14 @@ Dans les [issues de ce fork](https://github.com/ptuet/ROrganizer/issues),
 ou via **« Signaler un bug »** dans les réglages de l'app. Pour un bug
 qui existe aussi dans la version d'origine, tu peux aussi le signaler à
 [l'auteur](https://github.com/Loulouw/ROrganizer/issues).
+
+## Version vanilla
+
+Il existe aussi une version **vanilla**, sans les boutons invitation,
+zaap et PNJ ni le mode miniature : elle ne fait que changer de fenêtre
+et **n'envoie jamais rien au jeu**. Elle se télécharge sur la même page
+[Releases](https://github.com/ptuet/ROrganizer/releases), sous le nom
+`ROrganizer-<version>-vanilla-x86_64-windows.exe`.
 
 ## Crédits
 

@@ -6,7 +6,7 @@
 
 **Manage your Dofus Unity and Retro accounts from the keyboard. Open-source. No telemetry.**
 
-*Playing up to 8 accounts in parallel? Switch between them with **a single keystroke or mouse click**. No interaction with Dofus, no network connection, no bloat.*
+*Playing up to 8 accounts in parallel? Switch between them with **a single keystroke or mouse click**, invite your whole team into a group, send it to the same zaap or to an NPC **in one click**. No network connection, no bloat.*
 
 [![Version](https://img.shields.io/github/v/release/ptuet/ROrganizer?display_name=tag&label=version&color=97c459)](https://github.com/ptuet/ROrganizer/releases)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
@@ -21,27 +21,14 @@
 ---
 
 > 🍴 **This is a fork** of [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer),
-> the open-source organizer created by **Loulouw**, maintained by
-> [ptuet](https://github.com/ptuet). It fixes a few in-game issues (AZERTY
-> keys such as `²`, a cycle that follows the window you picked with the
-> mouse) and adds multi-account features: a second shortcut for
-> next / previous, taskbar sorting, minimizing to the taskbar, and three
-> buttons that **send chat commands to the game** — invite every account
-> into a group, send every account to the same zaap or to an NPC — also
-> available in a **mini window** to keep on top of the game.
->
-> Two builds are published on the [Releases page](https://github.com/ptuet/ROrganizer/releases):
-> `ROrganizer-<version>` with those buttons, and
-> `ROrganizer-<version>-vanilla`, which **never** sends anything to the
-> game. The full, up-to-date description is in the
-> [French README](README.md); the text below is the original author's
-> and does not cover the fork's additions.
+> the open-source organizer created by **Loulouw**. This fork fixes a few
+> in-game issues and adds multi-account features. All credit for the
+> original application goes to its author.
 
-> ⚠️ **Beware of impostors.** ROrganizer is downloaded **only** from the
-> [Releases page of this GitHub repo](https://github.com/ptuet/ROrganizer/releases),
+> ⚠️ **Beware of impostors.** This fork's releases are downloaded
+> **only** from the [Releases page of this repo](https://github.com/ptuet/ROrganizer/releases),
 > as **a single executable**. Never inside an archive, never as a script,
-> never from a file host or a link shared elsewhere. Any file carrying my
-> name that does not match this description did not come from me — see
+> never from a file host or a link shared elsewhere — see
 > [SECURITY.md](SECURITY.md) to verify your download.
 
 ## Preview
@@ -53,31 +40,34 @@
 ## Why ROrganizer?
 
 Inspired by **nAiO Organizer** — a tool well-known in the Dofus
-community — but **fully open-source**. For a tool that listens to
-your keyboard shortcuts and watches your Dofus windows, that's what
-changes everything.
+community — but **fully open-source**. For a tool that listens to your
+keyboard shortcuts and watches your Dofus windows, that's what changes
+everything.
 
-- 🔍 **Public source code**. Anyone can read it and verify there's
-  no keylogger, no telemetry, no hidden network connection.
+- 🔍 **Public source code**. Anyone can read it and verify there's no
+  keylogger, no telemetry, no hidden network connection.
 - 🔒 **Verifiable binary**. Every release is built by GitHub from the
   public source, never on a personal machine, with a provenance
   attestation you can check in one command. Nobody else can produce
   one. See [SECURITY.md](SECURITY.md).
-- 🛠️ **Future-proof**. If the project stops, anyone can pick it
-  up — your tool doesn't die with a single maintainer.
+- 🛠️ **Future-proof**. If the project stops, anyone can pick it up —
+  this fork is the proof.
 
 ## ✅ Your privacy
 
-> **Offline · No data collected · Never touches the game**
+> **Offline · No data collected**
 
 - The app **never connects to any server**.
-- The app **doesn't touch Dofus** at all: it doesn't read it, modify
-  it, or send anything to it. It just listens for your shortcuts and
-  brings the right window to the front.
+- The app **doesn't read or modify Dofus**. To switch accounts, it just
+  listens for your shortcuts and brings the right window to the front.
+- **Only the "group invite", "zaap" and "NPC" buttons** send something
+  to the game: they type `/invite <name>`, `/zaap x,y` or `/travel x,y`
+  in the chat for you and can press the "follow the group leader" key
+  (Ctrl+W by default), and only when you click them.
 - **No keystrokes are logged**. Shortcuts are matched on the fly and
   immediately forgotten.
-- The only file the app writes is **its own settings** (your
-  shortcuts, language and theme) in the Windows AppData folder.
+- The only file the app writes is **its own settings** (your shortcuts,
+  language and theme) in the Windows AppData folder.
 
 ## ⚡ Performance
 
@@ -87,13 +77,34 @@ changes everything.
 
 ## Features
 
-- 🔍 **Auto-detects** your accounts as soon as they're running, whether you
-  play on **Dofus**, **Dofus Retro** or **Dofus Experimental**
-- 🎯 **One shortcut per account**: keyboard key or mouse button
-- 🔄 **Cycle through accounts** with a next / previous shortcut
+- 🔍 **Auto-detects** your accounts as soon as they're running, whether
+  you play on **Dofus**, **Dofus Retro** or **Dofus Experimental**
+- 🎯 **One shortcut per account**: keyboard key or mouse button,
+  including **AZERTY** keys such as `²`, `ù` or `)`
+- 🔄 **Cycle through accounts** with a next / previous shortcut —
+  **two shortcuts possible** for each (a key and a mouse button, for
+  example)
+- 🖱️ **The cycle follows the active window**: if you switch account
+  with the mouse, "next" continues from where you really are
 - ✋ **Drag-and-drop** to reorder accounts however you want
+- 📊 **Windows taskbar sorting** in the same order, in one click
+- 👥 **Group invite**: the group leader invites all the others (the
+  first of the list by default, your choice in the settings)
+- 🌀 **Zaap for everyone**: search a zaap by name and all your accounts
+  teleport there (`/zaap`, Dofus 3.7+); the group leader then turns on
+  follow (option)
+- 🧭 **Travel to an NPC**: search ~1,800 NPCs by name or area; all your
+  accounts go to the nearest zaap, then the group leader travels
+  (`/travel`) and the others follow (option)
+- ⭐ **Favorites**: up to 5 zaaps and 5 NPCs pinned at the top of their
+  list
+- 🔳 **Mini mode**: a small bar with the NPC, zaap and invite buttons,
+  to keep on top of the game ("Always on top" option). As a row or a
+  square, it stays where you put it, and its dots turn green when your
+  shortcuts are active
 - 🌓 **Light or dark theme**, in FR / EN / ES
-- 📍 **Lives in the Windows system tray**, one click to activate
+- 📍 **Discreet**: minimizes to the system tray, or to the taskbar if
+  you'd rather keep the buttons one click away (option in the settings)
 
 ## Get started in 3 steps
 
@@ -115,42 +126,53 @@ Works on Windows 10 and Windows 11.
 > cargo build --release
 > .\target\release\rorganizer.exe
 > ```
+> The `main` branch builds the full version, the `vanilla` branch the
+> version that never sends commands to the game.
 
 ## FAQ
 
 **Do I have to configure each account one by one?**
 No. ROrganizer **auto-detects** every Dofus account as soon as it
 launches, on the regular client as well as **Dofus Retro** and
-**Dofus Experimental**. You just bind a shortcut once by clicking
-"set" next to each account — it's remembered for next time. Retro
-accounts show no class icon: their window title doesn't carry it.
+**Dofus Experimental**. You just bind a shortcut by clicking "set" next
+to each account — it's remembered. Retro accounts show no class icon:
+their window doesn't carry it.
 
 **What does it consume while I'm playing?**
-Very little: **~75 MB of RAM and 0% CPU at idle**. The app stays
-silent in the background until you press one of your shortcuts.
+Very little: **~75 MB of RAM and 0% CPU at idle**. The app stays silent
+in the background until you press one of your shortcuts.
 
 **Could I get banned for using this?**
-ROrganizer **does not interact with Dofus**. It doesn't read the
-game, doesn't modify it, doesn't send any command to it. It just
-brings a window to the front — exactly like `Alt+Tab` does in
-Windows. That said, using third-party tools is at your own risk
-regarding Ankama's terms of service.
+For switching accounts, ROrganizer **does not interact with Dofus**: it
+brings a window to the front, exactly like `Alt+Tab`. The **group
+invite**, **zaap** and **NPC** buttons go further: they type chat
+commands in several accounts from a single click. Ankama publishes no
+clear rule on this, and an action that acts on several accounts at once
+is the most sensitive area. If you want to avoid any risk, use the
+[vanilla version](#vanilla-version). In any case, using third-party
+tools is at your own risk regarding Ankama's terms of service.
+
+**The invite, zaap and NPC buttons do nothing, or open the game menu?**
+The app opens the chat with **Space** and turns on leader follow with
+**Ctrl+W**, Dofus's default keys. If you changed them in the game's
+shortcuts, set the same ones in the **Multi-account** tab of the
+settings (the gear).
 
 **Do shortcuts work while I'm in-game?**
-Yes. Shortcuts are listened to **at the Windows system level**, so
-they work no matter which window is in front (Dofus, your browser,
-another app…). One caveat: if Dofus runs as **administrator**, run
-ROrganizer as administrator too.
+Yes. Shortcuts are listened to **at the Windows system level**, so they
+work no matter which window is in front (Dofus, your browser, another
+app…). One caveat: if Dofus runs as **administrator**, run ROrganizer as
+administrator too.
 
 **Windows shows a blue warning at first launch, is this normal?**
-Yes. ROrganizer isn't signed with a **code-signing certificate**
-(which costs around €300/year and isn't justifiable for a free
-open-source project). Windows SmartScreen therefore warns about any
-executable it doesn't recognize yet. Click **"More info"** then
-**"Run anyway"**. To make sure you have the right binary, the full
-procedure is in [SECURITY.md](SECURITY.md): comparing the **SHA256**
-GitHub shows on the release page, and a **provenance attestation**
-you can check in one command from 1.3.0 onwards.
+Yes. ROrganizer isn't signed with a **code-signing certificate** (which
+costs around €300/year and isn't justifiable for a free open-source
+project). Windows SmartScreen therefore warns about any executable it
+doesn't know well yet. Click **"More info"** then **"Run anyway"**. To
+make sure you have the right binary, the procedure is in
+[SECURITY.md](SECURITY.md): comparing the **SHA256** GitHub shows on the
+release page, and a **provenance attestation** you can check in one
+command.
 
 **My antivirus flags a "trojan", is the app dangerous?**
 No, it's a **false positive**. To fire your shortcuts even while Dofus
@@ -163,15 +185,36 @@ known virus.
 
 What you can check yourself: the source code is public, **no keystroke
 is ever recorded** and the app **never connects to any server** — you
-can confirm it in Windows Resource Monitor. Every false positive is
-reported to Microsoft when a release ships, but the fix takes a few
-days to propagate. Until then, you can add the `.exe` as an exclusion
-in your antivirus, after checking its SHA256.
+can confirm it in Windows Resource Monitor. Until Microsoft fixes the
+false positive, you can add the `.exe` as an exclusion in your
+antivirus, after checking its SHA256.
 
 **How do I uninstall it?**
 Just delete the `.exe`. Your preferences are stored in
 `%APPDATA%\rorganizer\` — delete that folder for a full clean-up.
 **No Windows registry changes, no service installed.**
+
+**I found a bug, where do I report it?**
+In [this fork's issues](https://github.com/ptuet/ROrganizer/issues), or
+with **"Report a bug"** in the app's settings. For a bug that also
+exists in the original version, you can report it to
+[the author](https://github.com/Loulouw/ROrganizer/issues) too.
+
+## Vanilla version
+
+There is also a **vanilla** version, without the invite, zaap and NPC
+buttons or the mini mode: it only switches windows and **never sends
+anything to the game**. It is downloaded from the same
+[Releases](https://github.com/ptuet/ROrganizer/releases) page, as
+`ROrganizer-<version>-vanilla-x86_64-windows.exe`.
+
+## Credits
+
+ROrganizer was created by **[Loulouw](https://github.com/Loulouw)** —
+original repository: [Loulouw/ROrganizer](https://github.com/Loulouw/ROrganizer).
+This fork is maintained by **[ptuet](https://github.com/ptuet)**. The
+zaap and NPC lists come from the community database
+[DofusDB](https://dofusdb.fr).
 
 ## Disclaimer
 
