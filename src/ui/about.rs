@@ -255,6 +255,24 @@ fn options_tab(ui: &mut egui::Ui, ctx: &egui::Context, app: &mut App, theme: The
         if checkbox(ui, theme, &mut on_top, &t!("about.always_on_top")) {
             app.set_always_on_top(ctx, on_top);
         }
+        // Always shown: the option is what makes the mini window useful.
+        ui.horizontal(|ui| {
+            ui.add_space(22.0);
+            ui.add(
+                egui::Label::new(
+                    egui::RichText::new(t!("about.always_on_top_note"))
+                        .size(10.5)
+                        .color(theme::text_tertiary(theme)),
+                )
+                .wrap(),
+            );
+        });
+    });
+    let mut grid = app.compact_grid();
+    option_row(ui, theme, "compact_grid", &t!("help.compact_grid"), |ui| {
+        if checkbox(ui, theme, &mut grid, &t!("about.compact_grid")) {
+            app.set_compact_grid(grid);
+        }
     });
     // Pointer to the other tab: its options are about the game, not the
     // window, and are easy to miss.

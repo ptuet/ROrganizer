@@ -4,6 +4,7 @@ pub mod focus;
 pub mod keyboard_layout;
 pub mod process;
 pub mod taskbar;
+pub mod placement;
 pub mod watcher;
 
 pub use enumerate::{is_dofus_window, DetectedWindow, DEFAULT_TITLE_REGEX};

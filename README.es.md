@@ -28,7 +28,8 @@
 > siguiente / anterior, ordenar la barra de tareas, minimizar en la barra
 > de tareas, y tres botones que **envían comandos de chat al juego**:
 > invitar a todas las cuentas a un grupo y enviar todas las cuentas al
-> mismo zaap o hacia un PNJ.
+> mismo zaap o hacia un PNJ, también disponibles en una **ventana mini**
+> para dejar encima del juego.
 >
 > Se publican dos versiones en la [página de Releases](https://github.com/ptuet/ROrganizer/releases):
 > `ROrganizer-<versión>` con esos botones, y

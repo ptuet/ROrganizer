@@ -1,4 +1,5 @@
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicU64};
+use std::time::Instant;
 use std::sync::{Mutex, OnceLock};
 
 use crate::triggers::Trigger;
@@ -26,6 +27,10 @@ pub struct HookState {
     /// Bindings only fire while a Dofus window is in front; elsewhere the
     /// key / button goes through untouched (an "A" still types in a browser).
     pub dofus_only: bool,
+    /// ROrganizer's own window: counts as Dofus for `dofus_only`, so a
+    /// shortcut still works right after a click on the app (mini window
+    /// kept on top of the game).
+    pub own_hwnd: Option<isize>,
 }
 
 pub static HOOK_STATE: OnceLock<Mutex<HookState>> = OnceLock::new();
@@ -39,3 +44,15 @@ pub static HOOK_ENABLED: AtomicBool = AtomicBool::new(false);
 /// fire a binding. Separate from `HOOK_ENABLED`, which belongs to the user.
 pub static HOOK_PAUSED: AtomicBool = AtomicBool::new(false);
 
+
+/// Last key the keyboard hook acted on: `vk << 32 | now_ms()`. The app
+/// handles keys itself while its window is in front (the hook gets nothing
+/// then); this keeps it from acting a second time if both ever see one.
+pub static LAST_HOOK_KEY: AtomicU64 = AtomicU64::new(0);
+
+/// Milliseconds since the first call, truncated to 32 bits (compared with
+/// `wrapping_sub`).
+pub fn now_ms() -> u32 {
+    static START: OnceLock<Instant> = OnceLock::new();
+    START.get_or_init(Instant::now).elapsed().as_millis() as u32
+}

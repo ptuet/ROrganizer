@@ -27,7 +27,8 @@
 > mouse) and adds multi-account features: a second shortcut for
 > next / previous, taskbar sorting, minimizing to the taskbar, and three
 > buttons that **send chat commands to the game** — invite every account
-> into a group, send every account to the same zaap or to an NPC.
+> into a group, send every account to the same zaap or to an NPC — also
+> available in a **mini window** to keep on top of the game.
 >
 > Two builds are published on the [Releases page](https://github.com/ptuet/ROrganizer/releases):
 > `ROrganizer-<version>` with those buttons, and

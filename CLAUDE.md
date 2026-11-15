@@ -443,6 +443,17 @@ Workarounds essayés et abandonnés :
 
 Ces limitations sont assumées plutôt qu'un workaround visible côté UI.
 
+**Raccourcis quand ROrganizer est devant — corrigé.** Même cause : avec la
+miniature gardée au-dessus du jeu, un clic dessus la met au premier plan et
+le clavier ne déclenchait plus rien (re-mesuré : `keybd_event` sur `²` sans
+effet, alors que le bouton souris X2 marchait — le hook souris, lui, tire).
+`App::forward_shortcut_keys` passe donc les `Event::Key` d'egui à
+`HookHandle::press_key_from_app`, qui applique le même `resolve_action`.
+Coupé pendant toute saisie (recherche, capture, réglages). `LAST_HOOK_KEY`
+évite une double action si le hook et l'app voyaient un jour la même
+touche. Et l'option « raccourcis uniquement dans Dofus » accepte notre
+propre fenêtre (`HookState::own_hwnd`).
+
 **Touches OEM (², ù, ), =, ^, $…) sur layouts non-US — corrigé.** egui
 nomme les touches d'après leur position QWERTY US : `²` arrivait en
 `Backtick` → VK 0xC0, alors que le LL hook reçoit le VK FR 0xDE (et 0xC0
@@ -675,6 +686,83 @@ d'identifiant stable. Une clé absente de la table (liste régénérée, config
 éditée à la main) est retirée au chargement (`favorites::clean`). L'étoile
 est dessinée à la main (`picker::star`) : les polices par défaut n'ont pas
 de glyphe étoile.
+
+### Mode miniature (`main` uniquement)
+
+Bouton « cadre » de la barre de titre → `ui::compact` : PNJ, zaap,
+inviter et « agrandir », sur une ligne (144×36) ou en carré 2×2 (82×60,
+option `compact_grid`). **Volontairement non persisté** : l'app s'ouvre
+toujours en fenêtre complète (démarrer en miniature, c'était la perdre de
+vue). Les builds de test écrivaient `"compact"` : serde ignore ce champ
+inconnu (test `config_with_the_dropped_compact_field_still_loads`), ne pas
+ajouter `deny_unknown_fields`. Pas de mode premier plan forcé : c'est
+l'option existante `always_on_top`, avec une note toujours visible qui la
+recommande pour la miniature.
+
+- **Infobulles d'un mot** (`header.short_*`) : une infobulle egui ne sort
+  pas de la fenêtre, les phrases de la vue complète étaient coupées.
+- **Placement en Win32** (`win::placement`) : egui ne dit ni sur quel écran
+  est la fenêtre ni où cet écran commence. Un sélecteur ouvert depuis la
+  miniature est centré sur l'écran du **chef de groupe** (là où partent les
+  commandes ; la miniature peut être sur un autre écran), à défaut sur le
+  sien. Le centrage calcule la taille en pixels avec l'échelle de l'écran
+  d'**arrivée** (`GetDpiForMonitor`) : écrans à 100 % et 125 % ici, Windows
+  redimensionne la fenêtre en arrivant et elle était décentrée. Et la
+  miniature revient ensuite à sa place (`compact_home`). Le retour à la
+  fenêtre complète la ramène à sa dernière position (`full_pos`), ou la
+  centre si elle n'en a pas ou si elle n'y tiendrait pas entière
+  (`fits_on_screen`) : depuis un coin bas, ses 484 px de haut sortaient de
+  l'écran. La taille passée au centrage est la
+  taille *cible* en pixels physiques, car le redimensionnement demandé à
+  eframe n'est appliqué qu'après la frame.
+- **Position de chaque mode mémorisée** (`compact_pos` / `full_pos`,
+  persistées, `App::save_window_pos`) : celle du mode quitté est relevée au
+  changement de mode et à la fermeture, rappliquée en revenant dans ce mode
+  et au démarrage. Sans `full_pos`, eframe centre la fenêtre au lancement.
+- **Sélecteur déplaçable en miniature** (`picker::show(.., draggable)`) :
+  toute la fenêtre le déplace, zone enregistrée en premier pour que champ,
+  lignes, étoiles, × et défilement gardent leurs clics. Une 1ʳᵉ version
+  limitée à la ligne du titre (18 px) était introuvable à l'usage. Position
+  persistée (`picker_pos`) **seulement si l'utilisateur l'a déplacé**
+  (comparée à `picker_opened_at`) : sinon le sélecteur continue de suivre
+  l'écran du chef de groupe. Rappelée si elle tient à l'écran
+  (`fits_on_screen`), sinon centrage comme avant.
+- **Indicateur d'activation** : les points de la poignée sont verts quand
+  les raccourcis sont actifs, gris sinon. Rien d'ajouté, la miniature
+  garde sa taille ; infobulle d'un mot (« Actif » / « Inactif »).
+- **État « aucun compte »** : `EMPTY_STATE` (64 px, mesuré) dans
+  `apply_dynamic_height`, et non une ligne de compte (46 px). L'écart
+  rognait le bouton Activer ; invisible tant que l'indication sous le
+  bouton existait et que l'activation cachait la fenêtre.
+- **Faux clients pour les captures** : un `Dofus.exe` WinForms compilé par
+  `Add-Type -OutputAssembly` (titre passé en argument, fenêtre réduite)
+  suffit au watcher, qui ne regarde que le nom de l'exe et le titre. Les
+  vrais clients doivent être fermés. Pseudos fictifs uniquement (Lumina,
+  Korvak, Mistral, Brindille), jamais ceux de l'utilisateur.
+- ⚠ **Tester les glisser-déposer à la main**, pas en simulant la souris :
+  `StartDrag` entre dans la boucle de déplacement modale de Windows, qui
+  suit le vrai curseur ; un `SetCursorPos` scripté donne des décalages
+  faux, surtout si quelqu'un touche la souris en même temps.
+- ⚠ **Tester avec l'exe de l'utilisateur fermé.** Single-instance : un build
+  de test lancé pendant qu'une autre instance tourne se ferme et réveille
+  l'autre, et le script de test pilote alors cette fenêtre-là (ancienne
+  version, config de l'utilisateur). Vérifier le `Path` du process lancé. Une fenêtre réduite rapporte
+  (-32000, -32000) : toute position hors écran est ignorée, à la sauvegarde
+  comme au rappel (écran débranché depuis).
+- **« Activer » ne réduit plus la fenêtre** : avec la miniature, plus
+  d'intérêt. L'indication sous le bouton a disparu, et avec elle
+  `TOGGLE_HINT` dans `apply_dynamic_height`. « Activer » du menu tray la
+  range toujours.
+
+- La taille passe par `apply_dynamic_height` comme le reste :
+  `MinInnerSize` est envoyé **avec** `InnerSize`, sinon le minimum de
+  340×280 posé dans `main.rs` empêche de rétrécir.
+- Les sélecteurs zaap / PNJ s'ouvrent aussi en miniature : la fenêtre
+  grandit à 340×420 le temps du choix, puis revient à la barre. La barre
+  n'est pas dessinée pendant ce temps (elle transparaissait sous le fond
+  translucide du sélecteur).
+- Les boutons restent en place, grisés, quand il n'y a pas assez de
+  comptes : la largeur de la barre ne bouge jamais.
 
 ### Branches `main` / `vanilla`
 

@@ -66,6 +66,42 @@ impl HookHandle {
         let Ok(mut state) = state_mut.lock() else { return };
         state.dofus_only = on;
     }
+
+    /// A key pressed while ROrganizer's window is in front. The low-level
+    /// keyboard hook receives nothing then (see CLAUDE.md), so the app passes
+    /// its key events here and the binding acts as it would from the game.
+    pub fn press_key_from_app(&self, vk: u32) {
+        if !state::HOOK_ENABLED.load(Ordering::Relaxed)
+            || state::HOOK_PAUSED.load(Ordering::Relaxed)
+        {
+            return;
+        }
+        let last = state::LAST_HOOK_KEY.load(Ordering::Relaxed);
+        let age = state::now_ms().wrapping_sub(last as u32);
+        if (last >> 32) as u32 == vk && age < 300 {
+            return; // the hook already acted on this press
+        }
+        let Some(state_mut) = state::HOOK_STATE.get() else { return };
+        let target = {
+            let Ok(mut state) = state_mut.lock() else { return };
+            keyboard::resolve_action(
+                &mut state,
+                Trigger::Key(vk),
+                crate::win::foreground_window,
+                crate::win::is_dofus_window,
+            )
+        };
+        if let Some(hwnd) = target {
+            crate::win::focus_window(hwnd);
+        }
+    }
+
+    /// Our own window, accepted like Dofus by the `dofus_only` option.
+    pub fn set_own_window(&self, hwnd: isize) {
+        let Some(state_mut) = state::HOOK_STATE.get() else { return };
+        let Ok(mut state) = state_mut.lock() else { return };
+        state.own_hwnd = Some(hwnd);
+    }
 }
 
 /// Suspends (or resumes) every binding while ROrganizer injects keys itself.
@@ -110,6 +146,7 @@ pub fn install(dofus_only: bool) -> HookHandle {
         cycle_index: 0,
         cycle_current_hwnd: None,
         dofus_only,
+        own_hwnd: None,
     };
     state::HOOK_STATE
         .set(Mutex::new(st))

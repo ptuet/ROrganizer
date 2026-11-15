@@ -136,7 +136,7 @@ pub struct App {
     /// clicks and on cycle commands.
     cycle_current: Option<SlotKey>,
     last_synced_state: SyncSnapshot,
-    last_synced_height: f32,
+    last_synced_size: egui::Vec2,
     config_path: Option<PathBuf>,
     last_dirty_at: Option<Instant>,
     is_active: bool,
@@ -180,6 +180,31 @@ pub struct App {
     /// Starred zaaps and NPCs, keys in starred order (`favorites`).
     favorite_zaaps: Vec<String>,
     favorite_npcs: Vec<String>,
+    /// Mini window: only the NPC / zaap / invite buttons and "expand".
+    compact: bool,
+    /// Mini window buttons in a 2×2 square instead of one row (setting).
+    compact_grid: bool,
+    /// Where the mini window was before a picker centred it on the screen;
+    /// it goes back there when the picker closes.
+    compact_home: Option<(i32, i32)>,
+    /// Last spot of the full window (top-left, physical px), saved when
+    /// going into the mini window or quitting; persisted.
+    full_pos: Option<(i32, i32)>,
+    /// Move the window to `full_pos` on the next resize (back from the mini
+    /// window, or started full); centred when it has none or wouldn't fit.
+    full_pos_pending: bool,
+    /// Last spot of the mini window (top-left, physical px), saved when
+    /// going back to the full window or quitting; persisted.
+    compact_pos: Option<(i32, i32)>,
+    /// Move the window to `compact_pos` on the next resize (into the mini
+    /// window, or started in it).
+    compact_pos_pending: bool,
+    /// Last spot of the picker opened from the mini window (top-left,
+    /// physical px), where the user dragged it; persisted.
+    picker_pos: Option<(i32, i32)>,
+    /// Where the picker was placed when it opened: a picker closed there
+    /// was not moved, and its spot is not remembered.
+    picker_opened_at: Option<(i32, i32)>,
     /// Decoded once at boot. egui_extras is built without the PNG loader
     /// (only `svg`), so `Image::from_bytes("bytes://*.png", ...)` would
     /// render the red error placeholder. None on decode failure.
@@ -235,6 +260,10 @@ impl App {
             stored.as_ref().map(|c| c.favorite_npcs.clone()).unwrap_or_default(),
             |k| crate::npcs::NPCS.iter().any(|n| n.favorite_key() == k),
         );
+        let compact_grid = stored.as_ref().is_some_and(|c| c.compact_grid);
+        let compact_pos = stored.as_ref().and_then(|c| c.compact_pos);
+        let full_pos = stored.as_ref().and_then(|c| c.full_pos);
+        let picker_pos = stored.as_ref().and_then(|c| c.picker_pos);
         if always_on_top {
             cc.egui_ctx
                 .send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
@@ -286,6 +315,9 @@ impl App {
         win::spawn_watcher(windows.clone(), cc.egui_ctx.clone(), regex_src, refresh_rx);
 
         let hooks = crate::hooks::install(shortcuts_only_in_dofus);
+        if let Some(hwnd) = tray::main_hwnd() {
+            hooks.set_own_window(hwnd);
+        }
 
         Self {
             theme,
@@ -300,7 +332,7 @@ impl App {
             cycle_order,
             cycle_current: None,
             last_synced_state: SyncSnapshot::default(),
-            last_synced_height: 0.0,
+            last_synced_size: egui::Vec2::ZERO,
             config_path,
             last_dirty_at: None,
             is_active: false,
@@ -323,6 +355,19 @@ impl App {
             npc_query: None,
             favorite_zaaps,
             favorite_npcs,
+            // Always opens full: started in the mini window, the app was
+            // easy to lose (not persisted on purpose; an old config's
+            // `compact` is ignored).
+            compact: false,
+            compact_grid,
+            compact_home: None,
+            full_pos,
+            // Started full with no saved spot: eframe has centred it already.
+            full_pos_pending: full_pos.is_some(),
+            compact_pos,
+            compact_pos_pending: false,
+            picker_pos,
+            picker_opened_at: None,
             about_icon,
             class_icons,
         }
@@ -350,6 +395,61 @@ impl App {
 
     pub fn close_about(&mut self) {
         self.show_about = false;
+    }
+
+    pub fn is_compact(&self) -> bool {
+        self.compact
+    }
+
+    /// Switches between the full window and the mini one. Modals of the
+    /// full view are closed: the mini window has no room for them.
+    pub fn set_compact(&mut self, on: bool) {
+        if self.compact != on {
+            self.save_window_pos();
+            self.compact = on;
+            self.show_about = false;
+            self.capture_state = None;
+            // Each window goes back where it was left.
+            self.full_pos_pending = !on;
+            self.compact_pos_pending = on;
+            self.mark_dirty();
+        }
+    }
+
+    /// Remembers where the window is, for the mode shown (the mini window
+    /// not where a picker has centred it: its own spot is `compact_home`).
+    fn save_window_pos(&mut self) {
+        let home = if self.compact { self.compact_home } else { None };
+        let pos = home
+            .or_else(|| tray::main_hwnd().and_then(win::placement::position))
+            // Minimized, Windows reports (-32000, -32000): keep the old spot.
+            .filter(|&p| win::placement::is_on_screen(p));
+        let slot = if self.compact { &mut self.compact_pos } else { &mut self.full_pos };
+        if pos.is_some() && pos != *slot {
+            *slot = pos;
+            self.mark_dirty();
+        }
+    }
+
+    pub fn compact_grid(&self) -> bool {
+        self.compact_grid
+    }
+
+    pub fn set_compact_grid(&mut self, on: bool) {
+        if self.compact_grid != on {
+            self.compact_grid = on;
+            self.mark_dirty();
+        }
+    }
+
+    /// The zaap or NPC picker is shown.
+    pub fn is_picker_open(&self) -> bool {
+        self.zaap_query.is_some() || self.npc_query.is_some()
+    }
+
+    /// Number of launched accounts (enables the group buttons).
+    pub fn live_count(&self) -> usize {
+        self.live_accounts().len()
     }
 
     pub fn open_zaap(&mut self) {
@@ -387,9 +487,10 @@ impl App {
         self.about_icon.as_ref()
     }
 
-    pub fn request_activate(&mut self, ctx: &egui::Context) {
+    /// The window stays on screen: with the mini window there is no need to
+    /// put it away (the tray's "Activer" still does).
+    pub fn request_activate(&mut self) {
         self.set_active(true);
-        self.put_away(ctx);
     }
 
     /// Takes the window off screen, the way the user chose: minimized in
@@ -858,6 +959,10 @@ impl App {
             group_leader: self.group_leader.clone(),
             favorite_zaaps: self.favorite_zaaps.clone(),
             favorite_npcs: self.favorite_npcs.clone(),
+            compact_grid: self.compact_grid,
+            compact_pos: self.compact_pos,
+            full_pos: self.full_pos,
+            picker_pos: self.picker_pos,
         };
         let _ = config::save_atomic(path, &cfg);
     }
@@ -934,6 +1039,11 @@ impl App {
         const PANEL_PAD: f32 = 24.0; // 12 top + 12 bottom
         const SUMMARY: f32 = 22.0; // count label + refresh button row
         const ROW: f32 = 46.0; // frame ~40 (32 icon + 8 v-pad) + 6 inter-row gap
+        // "No account" message (`draw_empty_state`): 20 space + title +
+        // 6 + hint. Taller than a row: reserving one row clipped the
+        // activate button by ~10 px, hidden until now by the hint under
+        // that button (gone since it no longer puts the window away).
+        const EMPTY_STATE: f32 = 64.0; // measured: same 16 px under the button as with accounts
         const CYCLE_HEAD: f32 = 32.0; // separator + label + spacing
         const CYCLE_BLOCK: f32 = 2.0 * ROW + 4.0; // 2 rows + small slack
         const SUMMARY_GAP: f32 = 10.0;
@@ -941,24 +1051,23 @@ impl App {
         // Banner: 6 leading space + 16 frame inner_margin + 14 per line.
         const BANNER_BASE: f32 = 22.0;
         const BANNER_PER_LINE: f32 = 14.0;
-        // Activate/deactivate full-width button + hint when inactive.
+        // Activate/deactivate full-width button.
         const TOGGLE_BUTTON: f32 = 46.0;
-        const TOGGLE_HINT: f32 = 22.0;
 
         let n_accounts = self.windows.load().len() as f32;
-        let n_for_height = n_accounts.max(1.0); // reserve ~1 row even when empty
+        let list_h = if n_accounts > 0.0 { n_accounts * ROW } else { EMPTY_STATE };
         let n_conflicts = self.conflicting_triggers().len() as f32;
         let banner_h = if n_conflicts > 0.0 {
             BANNER_BASE + n_conflicts * BANNER_PER_LINE
         } else {
             0.0
         };
-        let toggle_h = TOGGLE_BUTTON + if self.is_active { 0.0 } else { TOGGLE_HINT };
+        let toggle_h = TOGGLE_BUTTON;
         let desired_content = TITLE_BAR
             + PANEL_PAD
             + SUMMARY
             + SUMMARY_GAP
-            + n_for_height * ROW
+            + list_h
             + banner_h
             + CYCLE_HEAD
             + CYCLE_BLOCK
@@ -968,15 +1077,114 @@ impl App {
         // the viewport at least that tall so the card doesn't get clipped at
         // the bottom — a clipped close button would look like a broken modal.
         const ABOUT_MIN: f32 = ui::about::ABOUT_CARD_HEIGHT;
+        let picker_open = self.is_picker_open();
         let mut desired = desired_content;
-        if self.show_about || self.zaap_query.is_some() || self.npc_query.is_some() {
+        if self.show_about || picker_open {
             desired = desired.max(ABOUT_MIN);
         }
         let desired = desired.clamp(280.0, 600.0);
 
-        if (desired - self.last_synced_height).abs() > 0.5 {
-            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(340.0, desired)));
-            self.last_synced_height = desired;
+        // Mini window: just the button bar, grown to fit the picker while one
+        // is open (the picker card is drawn over the whole window).
+        let picker_in_mini = self.compact && picker_open;
+        let (size, min) = if !self.compact {
+            (egui::vec2(340.0, desired), egui::vec2(340.0, 280.0))
+        } else if picker_in_mini {
+            let s = egui::vec2(340.0, ui::picker::CARD_SIZE.y + 20.0);
+            (s, s)
+        } else {
+            let s = ui::compact::size(self.compact_grid);
+            (s, s)
+        };
+        self.place_window(ctx, size, picker_in_mini);
+        self.resize_viewport(ctx, size, min);
+    }
+
+    /// Screen position: a picker opened from the mini window is centred on
+    /// the screen (the mini window may sit in a corner) and the mini window
+    /// goes back to its spot afterwards. Switching mode, each window returns
+    /// to its own last spot.
+    fn place_window(&mut self, ctx: &egui::Context, size: egui::Vec2, picker_in_mini: bool) {
+        let Some(hwnd) = tray::main_hwnd() else { return };
+        let scale = ctx.input(|i| i.viewport().native_pixels_per_point).unwrap_or(1.0);
+        let physical = ((size.x * scale).round() as i32, (size.y * scale).round() as i32);
+        if picker_in_mini && self.compact_home.is_none() {
+            self.compact_home = win::placement::position(hwnd);
+            // Where the user last dragged it; otherwise centred on the group
+            // leader's screen, where the commands are sent — the mini window
+            // may sit on another one.
+            match self.picker_pos.filter(|&p| win::placement::fits_on_screen(p, physical)) {
+                Some(pos) => win::placement::move_to(hwnd, pos),
+                None => {
+                    let screen_of = self.group_hwnds().first().copied().unwrap_or(hwnd);
+                    win::placement::center_on(hwnd, screen_of, (size.x, size.y));
+                }
+            }
+            self.picker_opened_at = win::placement::position(hwnd);
+        } else if !picker_in_mini && let Some(home) = self.compact_home.take() {
+            // Still the picker's spot: kept for the next one. Only once the
+            // user moved it, so an untouched picker keeps following the
+            // leader's screen.
+            let pos = win::placement::position(hwnd).filter(|&p| win::placement::is_on_screen(p));
+            if pos.is_some() && pos != self.picker_pos && pos != self.picker_opened_at {
+                self.picker_pos = pos;
+                self.mark_dirty();
+            }
+            win::placement::move_to(hwnd, home);
+        }
+        if self.full_pos_pending {
+            self.full_pos_pending = false;
+            // No saved spot, or one where the full window (much taller than
+            // the mini one) would run off the screen: centred instead.
+            match self.full_pos.filter(|&p| win::placement::fits_on_screen(p, physical)) {
+                Some(pos) => win::placement::move_to(hwnd, pos),
+                None => win::placement::center(hwnd, (size.x, size.y)),
+            }
+        }
+        if self.compact_pos_pending {
+            self.compact_pos_pending = false;
+            // A spot on a screen that is no longer plugged in is skipped.
+            if let Some(pos) = self.compact_pos.filter(|&p| win::placement::is_on_screen(p)) {
+                win::placement::move_to(hwnd, pos);
+            }
+        }
+    }
+
+    /// Shortcut keys pressed while our window is in front (the mini window
+    /// just clicked): the keyboard hook gets nothing then, so they are
+    /// passed on from egui's events. Not while something takes typing or a
+    /// key: search field, key capture, settings.
+    fn forward_shortcut_keys(&self, ctx: &egui::Context) {
+        if !self.is_active
+            || self.capture_state.is_some()
+            || self.game_key_capture.is_some()
+            || self.show_about
+            || self.is_picker_open()
+        {
+            return;
+        }
+        let keys: Vec<u32> = ctx.input(|i| {
+            i.events
+                .iter()
+                .filter_map(|e| match e {
+                    egui::Event::Key { key, physical_key, pressed: true, repeat: false, .. } => {
+                        crate::triggers::event_to_vk(*key, *physical_key)
+                    }
+                    _ => None,
+                })
+                .collect()
+        });
+        for vk in keys {
+            self.hooks.press_key_from_app(vk);
+        }
+    }
+
+    /// Sends the size (and the matching minimum) only when it changed.
+    fn resize_viewport(&mut self, ctx: &egui::Context, size: egui::Vec2, min: egui::Vec2) {
+        if (size - self.last_synced_size).length() > 0.5 {
+            ctx.send_viewport_cmd(egui::ViewportCommand::MinInnerSize(min));
+            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
+            self.last_synced_size = size;
         }
     }
 }
@@ -1019,11 +1227,16 @@ impl eframe::App for App {
         self.sync_state_to_hooks(false);
         self.update_tray_status(false);
         self.apply_dynamic_height(ctx);
+        self.forward_shortcut_keys(ctx);
 
-        ui::header::draw(ui, self);
-        ui::main_view::draw(ui, self);
-        ui::capture::draw(ctx, self);
-        ui::about::draw(ctx, self);
+        if self.compact {
+            ui::compact::draw(ui, self);
+        } else {
+            ui::header::draw(ui, self);
+            ui::main_view::draw(ui, self);
+            ui::capture::draw(ctx, self);
+            ui::about::draw(ctx, self);
+        }
         ui::zaap::draw(ctx, self);
         ui::npc::draw(ctx, self);
 
@@ -1031,6 +1244,7 @@ impl eframe::App for App {
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.save_window_pos();
         if self.last_dirty_at.is_some() {
             self.persist_config();
             self.last_dirty_at = None;
