@@ -6,9 +6,7 @@
     "empty_title": "Ninguna cuenta detectada",
     "empty_hint": "Inicia Dofus para ver tus personajes aquí.",
     "activate": "Activar",
-    "deactivate": "Desactivar",
-    "activate_hint": "se minimiza a la bandeja del sistema",
-    "activate_hint_taskbar": "se minimiza en la barra de tareas"
+    "deactivate": "Desactivar"
   },
   "header": {
     "tooltip_minimize": "Minimizar a la bandeja",
@@ -21,7 +19,15 @@
     "tooltip_about": "Acerca de",
     "tooltip_zaap_group": "Enviar todas las cuentas al mismo zaap",
     "tooltip_npc_group": "Enviar todas las cuentas a un PNJ",
-    "tooltip_minimize_taskbar": "Minimizar en la barra de tareas"
+    "tooltip_minimize_taskbar": "Minimizar en la barra de tareas",
+    "tooltip_compact": "Modo mini: solo los botones de grupo",
+    "tooltip_expand": "Volver a la ventana completa",
+    "short_npc": "PNJ",
+    "short_zaap": "Zaap",
+    "short_invite": "Invitar",
+    "short_expand": "Ampliar",
+    "short_active": "Activo",
+    "short_inactive": "Inactivo"
   },
   "about": {
     "credit": "Desarrollado por Loulouw con la ayuda de Claude",
@@ -34,6 +40,8 @@
     "fork": "Fork mantenido por ptuet",
     "shortcuts_only_in_dofus": "Atajos activos solo cuando Dofus está en primer plano",
     "always_on_top": "Siempre en primer plano",
+    "always_on_top_note": "Ideal para usar el modo mini de la aplicación.",
+    "compact_grid": "Modo mini: botones en cuadrado (2×2)",
     "npc_follow_leader": "Trayecto a un PNJ: seguir al jefe de grupo",
     "npc_follow_leader_hint": "Marcado: todas las cuentas se teletransportan al zaap, luego el jefe de grupo activa el seguimiento (Ctrl+W por defecto) y es el único en hacer el trayecto; las demás lo siguen. Sin marcar: cada cuenta hace su propio trayecto.",
     "npc_follow_delay": "Pausa",
@@ -96,9 +104,10 @@
     "keys": "Teclas del juego"
   },
   "help": {
-    "minimize_to_taskbar": "Marcado: «–» y «Activar» minimizan la ventana en la barra de tareas, abajo de la pantalla, para tener los botones a un clic. Sin marcar: se oculta en la bandeja del sistema, junto al reloj.",
+    "minimize_to_taskbar": "Marcado: «–» minimiza la ventana en la barra de tareas, abajo de la pantalla, para tener los botones a un clic. Sin marcar: se oculta en la bandeja del sistema, junto al reloj.",
     "shortcuts_only_in_dofus": "Marcado: tus atajos no hacen nada cuando estás en otra aplicación (navegador, Discord…); la tecla funciona normalmente allí. Sin marcar: funcionan en todas partes.",
     "always_on_top": "Marcado: la ventana queda por encima de todas, incluso al hacer clic en Dofus. Sin marcar: pasa detrás, como una ventana normal.",
+    "compact_grid": "Marcado: la ventana mini coloca sus 4 botones en dos filas, en cuadrado. Sin marcar: en una sola fila. El botón junto a la luna, arriba, pasa a la ventana mini.",
     "group_leader": "La cuenta que invita a las demás, a la que siguen tras un zaap o hacia un PNJ y a la que vuelve la app tras un comando de grupo. Por defecto, la primera de la lista."
   },
   "favorites": {

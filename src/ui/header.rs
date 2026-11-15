@@ -65,6 +65,16 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
                             if mini.clicked() {
                                 app.request_minimize(ctx);
                             }
+                            let compact = crate::ui::main_view::icon_button(
+                                ui,
+                                theme,
+                                false,
+                                crate::ui::compact::paint_mini_icon,
+                            )
+                            .on_hover_text(t!("header.tooltip_compact").to_string());
+                            if compact.clicked() {
+                                app.set_compact(true);
+                            }
                             ui.add_space(2.0);
                             let theme_resp = theme_button(ui, theme)
                                 .on_hover_text(t!("header.tooltip_theme").to_string());

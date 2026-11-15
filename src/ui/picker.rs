@@ -46,6 +46,9 @@ pub enum Outcome {
 
 /// Draws the picker over the whole window. `query` is edited in place.
 /// `full`: the favourites are full, unstarred rows can't be starred.
+/// `draggable`: the title row moves the window (picker opened from the mini
+/// window, where the window *is* the picker).
+#[allow(clippy::too_many_arguments)]
 pub fn show(
     ctx: &egui::Context,
     theme: Theme,
@@ -54,6 +57,7 @@ pub fn show(
     query: &mut String,
     rows: &[Row<'_>],
     full: bool,
+    draggable: bool,
 ) -> Outcome {
     if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
         return Outcome::Close;
@@ -87,6 +91,16 @@ pub fn show(
         .order(egui::Order::Foreground)
         .fixed_pos(screen_rect.left_top())
         .show(ctx, |ui| {
+            if draggable {
+                // The whole window moves it. Registered first: the search
+                // field, rows, stars, close button and list scrolling drawn
+                // after it keep their own clicks and drags.
+                let drag =
+                    ui.interact(screen_rect, egui::Id::new(id).with("drag"), Sense::click_and_drag());
+                if drag.drag_started() {
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                }
+            }
             ui.painter()
                 .rect_filled(screen_rect, CornerRadius::ZERO, backdrop);
             let card_rect = egui::Rect::from_center_size(screen_rect.center(), CARD_SIZE);

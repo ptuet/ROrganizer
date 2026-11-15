@@ -5,7 +5,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN,
 };
 
-use super::state::{BindingAction, HOOK_ENABLED, HOOK_PAUSED, HOOK_STATE};
+use super::state::{BindingAction, HOOK_ENABLED, HOOK_PAUSED, HOOK_STATE, LAST_HOOK_KEY};
 use crate::triggers::Trigger;
 
 pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT { unsafe {
@@ -37,6 +37,7 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
     });
 
     if let Some(hwnd) = focus_target {
+        LAST_HOOK_KEY.store(u64::from(vk) << 32 | u64::from(super::state::now_ms()), Ordering::Relaxed);
         crate::win::focus_window(hwnd);
         return LRESULT(1);
     }
@@ -51,8 +52,8 @@ pub unsafe extern "system" fn kb_proc(code: i32, wparam: WPARAM, lparam: LPARAM)
 /// and only when needed:
 /// - with `dofus_only`, nothing happens unless that window is Dofus — a
 ///   detected account, or any window of a Dofus executable (login screen,
-///   secondary window), checked through `is_dofus_window`. `None` lets the
-///   caller pass the key on untouched;
+///   secondary window), checked through `is_dofus_window` — or ROrganizer
+///   itself (`own_hwnd`). `None` lets the caller pass the key on untouched;
 /// - for cycle actions, when that window is part of the cycle, the cursor
 ///   snaps to it first. The user may have switched account with the mouse
 ///   (taskbar, click) since our last focus, and Next / Prev must continue
@@ -75,7 +76,9 @@ pub(super) fn resolve_action(
         None
     };
     if state.dofus_only
-        && !fg.is_some_and(|h| state.cycle_hwnds.contains(&h) || is_dofus_window(h))
+        && !fg.is_some_and(|h| {
+            state.cycle_hwnds.contains(&h) || Some(h) == state.own_hwnd || is_dofus_window(h)
+        })
     {
         return None;
     }
@@ -132,6 +135,7 @@ mod tests {
             cycle_index: 0,
             cycle_current_hwnd: None,
             dofus_only: false,
+            own_hwnd: None,
         }
     }
 
@@ -357,6 +361,20 @@ mod tests {
         // Login screen of a client: a Dofus process, not in the account list.
         let mut st = dofus_only_state(BindingAction::Focus(300));
         let r = resolve_action(&mut st, Trigger::Key(0x41), || Some(555), |h| h == 555);
+        assert_eq!(r, Some(300));
+    }
+
+    #[test]
+    fn dofus_only_acts_from_rorganizer_itself() {
+        // Mini window kept on top, just clicked: it is in front.
+        let mut st = dofus_only_state(BindingAction::Focus(300));
+        st.own_hwnd = Some(777);
+        let r = resolve_action(
+            &mut st,
+            Trigger::Key(0x41),
+            || Some(777),
+            |_| panic!("no process lookup needed for our own window"),
+        );
         assert_eq!(r, Some(300));
     }
 

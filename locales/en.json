@@ -6,9 +6,7 @@
     "empty_title": "No account detected",
     "empty_hint": "Launch Dofus to see your characters here.",
     "activate": "Activate",
-    "deactivate": "Deactivate",
-    "activate_hint": "minimizes to the system tray",
-    "activate_hint_taskbar": "minimizes to the taskbar"
+    "deactivate": "Deactivate"
   },
   "header": {
     "tooltip_minimize": "Minimize to system tray",
@@ -21,7 +19,15 @@
     "tooltip_about": "About",
     "tooltip_zaap_group": "Send every account to the same zaap",
     "tooltip_npc_group": "Send every account to an NPC",
-    "tooltip_minimize_taskbar": "Minimize to the taskbar"
+    "tooltip_minimize_taskbar": "Minimize to the taskbar",
+    "tooltip_compact": "Mini mode: just the group buttons",
+    "tooltip_expand": "Back to the full window",
+    "short_npc": "NPC",
+    "short_zaap": "Zaap",
+    "short_invite": "Invite",
+    "short_expand": "Expand",
+    "short_active": "On",
+    "short_inactive": "Off"
   },
   "about": {
     "credit": "Built by Loulouw with the help of Claude",
@@ -34,6 +40,8 @@
     "fork": "Fork maintained by ptuet",
     "shortcuts_only_in_dofus": "Shortcuts only work while Dofus is in front",
     "always_on_top": "Always on top",
+    "always_on_top_note": "Best for using the app’s mini mode.",
+    "compact_grid": "Mini mode: buttons in a square (2×2)",
     "npc_follow_leader": "NPC travel: follow the group leader",
     "npc_follow_leader_hint": "Checked: every account teleports to the zaap, then the group leader turns on follow (Ctrl+W by default) and is the only one to walk; the others follow. Unchecked: each account walks by itself.",
     "npc_follow_delay": "Pause",
@@ -96,9 +104,10 @@
     "keys": "Game keys"
   },
   "help": {
-    "minimize_to_taskbar": "Checked: “–” and “Activate” minimize the window to the taskbar, at the bottom of the screen, to keep the buttons one click away. Unchecked: it hides in the system tray, near the clock.",
+    "minimize_to_taskbar": "Checked: “–” minimizes the window to the taskbar, at the bottom of the screen, to keep the buttons one click away. Unchecked: it hides in the system tray, near the clock.",
     "shortcuts_only_in_dofus": "Checked: your shortcuts do nothing while you are in another application (browser, Discord…); the key works normally there. Unchecked: they work everywhere.",
     "always_on_top": "Checked: the window stays above all the others, even when you click Dofus. Unchecked: it goes behind, like a normal window.",
+    "compact_grid": "Checked: the mini window lays its 4 buttons out on two rows, as a square. Unchecked: on a single row. The button next to the moon, at the top, switches to the mini window.",
     "group_leader": "The account that invites the others, that the others follow after a zaap or to an NPC, and that the app comes back to after a group command. By default, the first of the list."
   },
   "favorites": {

@@ -6,9 +6,7 @@
     "empty_title": "Aucun compte détecté",
     "empty_hint": "Lance Dofus pour voir tes personnages ici.",
     "activate": "Activer",
-    "deactivate": "Désactiver",
-    "activate_hint": "se réduit dans la barre système",
-    "activate_hint_taskbar": "se réduit dans la barre des tâches"
+    "deactivate": "Désactiver"
   },
   "header": {
     "tooltip_minimize": "Réduire dans la barre système",
@@ -21,7 +19,15 @@
     "tooltip_about": "À propos",
     "tooltip_zaap_group": "Envoyer tous les comptes au même zaap",
     "tooltip_npc_group": "Envoyer tous les comptes vers un PNJ",
-    "tooltip_minimize_taskbar": "Réduire dans la barre des tâches"
+    "tooltip_minimize_taskbar": "Réduire dans la barre des tâches",
+    "tooltip_compact": "Mode miniature : juste les boutons de groupe",
+    "tooltip_expand": "Revenir à la fenêtre complète",
+    "short_npc": "PNJ",
+    "short_zaap": "Zaap",
+    "short_invite": "Inviter",
+    "short_expand": "Agrandir",
+    "short_active": "Actif",
+    "short_inactive": "Inactif"
   },
   "about": {
     "credit": "Développé par Loulouw avec l'aide de Claude",
@@ -34,6 +40,8 @@
     "fork": "Fork maintenu par ptuet",
     "shortcuts_only_in_dofus": "Raccourcis actifs uniquement quand Dofus est au premier plan",
     "always_on_top": "Toujours au premier plan",
+    "always_on_top_note": "Optimal pour utiliser le mode miniature de l’application.",
+    "compact_grid": "Mode miniature : boutons en carré (2×2)",
     "npc_follow_leader": "Trajet vers un PNJ : suivre le chef de groupe",
     "npc_follow_leader_hint": "Coché : tous les comptes se téléportent au zaap, puis le chef de groupe active le suivi (Ctrl+W par défaut) et est le seul à faire le trajet ; les autres le suivent. Décoché : chaque compte fait son propre trajet.",
     "npc_follow_delay": "Pause",
@@ -96,9 +104,10 @@
     "keys": "Touches du jeu"
   },
   "help": {
-    "minimize_to_taskbar": "Coché : « – » et « Activer » réduisent la fenêtre dans la barre des tâches, en bas de l’écran, pour garder les boutons à un clic. Décoché : elle se cache dans la barre système, près de l’horloge.",
+    "minimize_to_taskbar": "Coché : « – » réduit la fenêtre dans la barre des tâches, en bas de l’écran, pour garder les boutons à un clic. Décoché : elle se cache dans la barre système, près de l’horloge.",
     "shortcuts_only_in_dofus": "Coché : tes raccourcis ne font rien quand tu es dans une autre application (navigateur, Discord…) ; la touche y fonctionne normalement. Décoché : ils marchent partout.",
     "always_on_top": "Coché : la fenêtre reste au-dessus de toutes les autres, même quand tu cliques sur Dofus. Décoché : elle passe derrière, comme une fenêtre normale.",
+    "compact_grid": "Coché : la miniature range ses 4 boutons sur deux lignes, en carré. Décoché : sur une seule ligne. Le bouton à côté de la lune, en haut, passe en miniature.",
     "group_leader": "Le compte qui invite les autres, que les autres suivent après un zaap ou vers un PNJ, et sur lequel l’app revient après une commande de groupe. Par défaut, le premier de la liste."
   },
   "favorites": {

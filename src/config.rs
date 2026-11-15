@@ -58,6 +58,19 @@ pub struct StoredConfig {
     /// Starred NPCs, shown first in the picker (`favorites`).
     #[serde(default)]
     pub favorite_npcs: Vec<String>,
+    /// Mini window buttons in a 2×2 square instead of one row.
+    #[serde(default)]
+    pub compact_grid: bool,
+    /// Last spot of the mini window, top-left in physical px.
+    #[serde(default)]
+    pub compact_pos: Option<(i32, i32)>,
+    /// Last spot of the full window, top-left in physical px.
+    #[serde(default)]
+    pub full_pos: Option<(i32, i32)>,
+    /// Last spot of the picker opened from the mini window, top-left in
+    /// physical px; only set once the user moved it.
+    #[serde(default)]
+    pub picker_pos: Option<(i32, i32)>,
 }
 
 fn default_true() -> bool {
@@ -153,6 +166,10 @@ mod tests {
             group_leader: Some("Dowoip".into()),
             favorite_zaaps: vec!["Port de Madrestam [7,-4]".into()],
             favorite_npcs: vec!["Ganymède · Ganymède [1,2]".into()],
+            compact_grid: true,
+            compact_pos: Some((-1200, 980)),
+            full_pos: Some((790, 274)),
+            picker_pos: Some((2400, 300)),
         }
     }
 
@@ -164,6 +181,17 @@ mod tests {
         json.as_object_mut().unwrap().remove("always_on_top");
         std::fs::write(&path, json.to_string()).unwrap();
         assert!(!load(&path).expect("old config loads").always_on_top);
+    }
+
+    #[test]
+    fn config_with_the_dropped_compact_field_still_loads() {
+        // Test builds saved `"compact": true`; the app now always opens full.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut json = serde_json::to_value(sample_config()).unwrap();
+        json.as_object_mut().unwrap().insert("compact".into(), true.into());
+        std::fs::write(&path, json.to_string()).unwrap();
+        assert!(load(&path).is_some());
     }
 
     #[test]
@@ -208,6 +236,10 @@ mod tests {
         assert_eq!(loaded.group_leader, cfg.group_leader);
         assert_eq!(loaded.favorite_zaaps, cfg.favorite_zaaps);
         assert_eq!(loaded.favorite_npcs, cfg.favorite_npcs);
+        assert_eq!(loaded.compact_grid, cfg.compact_grid);
+        assert_eq!(loaded.compact_pos, cfg.compact_pos);
+        assert_eq!(loaded.full_pos, cfg.full_pos);
+        assert_eq!(loaded.picker_pos, cfg.picker_pos);
     }
 
     #[test]

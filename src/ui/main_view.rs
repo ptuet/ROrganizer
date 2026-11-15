@@ -54,11 +54,11 @@ pub fn draw(ui: &mut egui::Ui, app: &mut App) {
 
             ui.add_space(8.0);
             draw_cycle_section(ui, theme, app, &conflicts);
-            draw_active_toggle(ui, ctx, theme, app);
+            draw_active_toggle(ui, theme, app);
         });
 }
 
-fn draw_active_toggle(ui: &mut egui::Ui, ctx: &egui::Context, theme: Theme, app: &mut App) {
+fn draw_active_toggle(ui: &mut egui::Ui, theme: Theme, app: &mut App) {
     ui.add_space(10.0);
     let active = app.is_active();
     let label = if active {
@@ -94,26 +94,11 @@ fn draw_active_toggle(ui: &mut egui::Ui, ctx: &egui::Context, theme: Theme, app:
         txt,
     );
 
-    if !active {
-        ui.add_space(4.0);
-        ui.vertical_centered(|ui| {
-            ui.label(
-                egui::RichText::new(if app.minimize_to_taskbar() {
-                    t!("main.activate_hint_taskbar").to_string()
-                } else {
-                    t!("main.activate_hint").to_string()
-                })
-                    .size(11.0)
-                    .color(theme::text_tertiary(theme)),
-            );
-        });
-    }
-
     if response.clicked() {
         if active {
             app.request_deactivate();
         } else {
-            app.request_activate(ctx);
+            app.request_activate();
         }
     }
 }
@@ -187,7 +172,7 @@ fn draw_summary(ui: &mut egui::Ui, theme: Theme, count: usize) -> Option<Summary
 }
 
 /// "NPC": a map pin (the NPC's position).
-fn paint_npc_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+pub(crate) fn paint_npc_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
     let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
     // Round head (most of a circle) narrowing to the tip at the bottom.
     let (cx, cy, r) = (13.0, 8.5, 5.0);
@@ -205,7 +190,7 @@ fn paint_npc_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
 
 /// Small icon button drawn by hand, so it doesn't depend on a glyph being
 /// present in the bundled fonts. Greyed out and inert while `busy`.
-fn icon_button(
+pub(crate) fn icon_button(
     ui: &mut egui::Ui,
     theme: Theme,
     busy: bool,
@@ -238,7 +223,7 @@ fn paint_sort_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
 /// "Zaap": a round horseshoe arch on two feet and a base, a teleport vortex
 /// inside — modelled on Ganymède's zaap icon. Coordinates are in the 26×22
 /// button space, same as the SVG mock-up it was picked from.
-fn paint_zaap_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+pub(crate) fn paint_zaap_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
     use std::f32::consts::PI;
     let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
     let (cx, cy) = (13.0, 10.5);
@@ -272,7 +257,7 @@ fn paint_zaap_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
 }
 
 /// "Invite": a person (head + shoulders) with a "+" on its right.
-fn paint_invite_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
+pub(crate) fn paint_invite_icon(painter: &egui::Painter, rect: egui::Rect, stroke: Stroke) {
     let c = rect.center();
     let person = egui::pos2(c.x - 3.0, c.y);
     painter.circle_stroke(person + egui::vec2(0.0, -3.5), 2.5, stroke);

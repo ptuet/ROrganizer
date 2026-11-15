@@ -28,6 +28,10 @@ pub fn register_main_hwnd(hwnd: isize) {
     let _ = MAIN_HWND.set(hwnd);
 }
 
+pub fn main_hwnd() -> Option<isize> {
+    MAIN_HWND.get().copied()
+}
+
 #[cfg(windows)]
 fn show_main_window() {
     if let Some(&raw) = MAIN_HWND.get() {

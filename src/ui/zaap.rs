@@ -31,7 +31,8 @@ pub fn draw(ctx: &egui::Context, app: &mut App) {
     };
 
     let full = favs.len() >= favorites::MAX;
-    match picker::show(ctx, theme, "zaap_overlay", &texts, &mut query, &rows, full) {
+    let draggable = app.is_compact();
+    match picker::show(ctx, theme, "zaap_overlay", &texts, &mut query, &rows, full, draggable) {
         Outcome::Close => app.close_zaap(),
         Outcome::Picked(i) => {
             app.close_zaap();
